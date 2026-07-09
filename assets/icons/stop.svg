@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_圖層_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 24 24">
+  <!-- Generator: Adobe Illustrator 29.3.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 151)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #0b0b0b;
+      }
+
+      .st1 {
+        fill: none;
+        stroke: #000;
+        stroke-miterlimit: 133.3;
+        stroke-width: 2px;
+      }
+    </style>
+  </defs>
+  <rect class="st0" x="6.7" y="6.7" width="10.6" height="10.6" rx="2.8" ry="2.8"/>
+  <ellipse class="st1" cx="12" cy="12" rx="10.2" ry="9.8"/>
+</svg>
