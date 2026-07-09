@@ -52,7 +52,7 @@ recordBtn.addEventListener('click', async () => {
 
       stream.getTracks().forEach(t => t.stop());
       analyzeBtn.disabled = false;
-      saveHistory(sentence.value.trim(), currentBlobUrl);
+      saveHistory(sentence.value.trim(), blob);
       setStatus('錄音完成。可以播放確認，也可以下載音檔。');
     };
 
@@ -100,9 +100,33 @@ analyzeBtn.addEventListener('click', () => {
   setStatus('目前為模擬分析。正式版會把錄音送到 Azure Speech 做真正分析。');
 });
 
-function saveHistory(text, audioUrl){
+// 錄音改存成 Base64（data URL）而非 Blob URL，避免重新整理頁面後歷史紀錄的音檔失效。
+// 同一句話只保留最後一次錄音：儲存前先移除相同句子的舊紀錄。
+function saveHistory(text, audioBlob){
   if(!text) return;
-  const records = JSON.parse(localStorage.getItem('pronunciationHistory') || '[]');
-  records.unshift({ text, audioUrl, createdAt: new Date().toLocaleString('zh-TW') });
-  localStorage.setItem('pronunciationHistory', JSON.stringify(records.slice(0,5)));
+
+  const writeRecord = (audioDataUrl) => {
+    const records = JSON.parse(localStorage.getItem('pronunciationHistory') || '[]');
+    const filtered = records.filter(r => r.text !== text);
+    filtered.unshift({ text, audioUrl: audioDataUrl || '', createdAt: new Date().toLocaleString('zh-TW') });
+    const trimmed = filtered.slice(0, 5);
+
+    try{
+      localStorage.setItem('pronunciationHistory', JSON.stringify(trimmed));
+    }catch(e){
+      // localStorage 容量不足時，逐步減少保留筆數，盡量保住至少一筆紀錄。
+      for(let keep = trimmed.length - 1; keep >= 1; keep--){
+        try{
+          localStorage.setItem('pronunciationHistory', JSON.stringify(trimmed.slice(0, keep)));
+          break;
+        }catch(e2){ /* 容量仍不足，繼續減少筆數重試 */ }
+      }
+    }
+  };
+
+  if(!audioBlob){ writeRecord(''); return; }
+  const reader = new FileReader();
+  reader.onloadend = () => writeRecord(reader.result);
+  reader.onerror = () => writeRecord('');
+  reader.readAsDataURL(audioBlob);
 }
