@@ -37,8 +37,8 @@ button img{width:26px;height:26px}
 button:disabled{opacity:.55;cursor:not-allowed}
 .btn-listen{background:linear-gradient(135deg,#0ec4b9,#08a7a3)} .btn-listen img{filter:brightness(0) invert(1)}
 .btn-record{background:linear-gradient(135deg,#318fe8,#267fd2)} .btn-record img{filter:brightness(0) invert(1)}
-.btn-stop{background:linear-gradient(135deg,#ffc8c8,#ff9f9f);color:var(--red-text)}
-.btn-analyze{background:linear-gradient(135deg,#ffe5a7,#ffd074);color:var(--yellow-text)}
+.btn-stop{background:linear-gradient(135deg,#ffc8c8,#ff9f9f);color:var(--red-text)} .btn-stop img{filter:brightness(0) invert(1)}
+.btn-analyze{background:linear-gradient(135deg,#ffe5a7,#ffd074);color:var(--yellow-text)} .btn-analyze img{filter:brightness(0) invert(1)}
 .notice{border-radius:16px;background:linear-gradient(135deg,#edfaff,#eff8ff);padding:18px 20px;font-size:15px;color:#006f8f;font-weight:800;margin-bottom:20px}
 .download-link{display:none;margin-bottom:28px;text-decoration:none;width:fit-content}
 .mini-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
