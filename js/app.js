@@ -74,18 +74,29 @@ stopBtn.addEventListener('click', () => {
   }
 });
 
+const metricIds = ['accuracy','stress','rhythm','connected','elision','fluency'];
+
 analyzeBtn.addEventListener('click', () => {
   const score = Math.floor(Math.random() * 41) + 50; // 50-90 demo
   document.getElementById('overall').textContent = score;
+  document.getElementById('scoreRing').style.background = `conic-gradient(var(--teal) 0 ${score}%, #dff4f2 ${score}% 100%)`;
+
   const img = document.getElementById('characterImage');
   if(img){
     img.onerror = null;
     img.src = score >= 60 ? 'assets/characters/character-koala-happy.png' : 'assets/characters/character-koala-angry.png';
   }
-  document.getElementById('scoreText').textContent = score >= 60 ? '很棒！😍' : '再加油！';
+  document.getElementById('scoreText').textContent = score >= 60 ? 'Great!' : '再加油！';
   document.getElementById('scoreMessage').innerHTML = score >= 60
     ? '你的發音清晰，節奏掌握得不錯，<br>再練習連音會更自然喔！'
     : '這次分數偏低，可以先放慢速度，<br>再重新錄一次。';
+
+  metricIds.forEach(id => {
+    const metricScore = Math.floor(Math.random() * 41) + 50; // 50-90 demo，暫用與 overall 相同的模擬邏輯
+    document.getElementById(`bar-${id}`).style.width = `${metricScore}%`;
+    document.getElementById(`value-${id}`).innerHTML = `${metricScore} <small>/100</small>`;
+  });
+
   setStatus('目前為模擬分析。正式版會把錄音送到 Azure Speech 做真正分析。');
 });
 

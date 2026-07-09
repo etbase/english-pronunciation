@@ -47,7 +47,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .mini strong{display:block;font-size:19px;font-weight:900;color:#0b2b55}
 .mini span{font-size:14px;color:#6a7890;font-weight:700}
 .result-top{display:grid;grid-template-columns:190px 1fr 210px;gap:24px;align-items:center;margin-bottom:26px}
-.score-ring{width:168px;height:168px;border-radius:50%;background:conic-gradient(var(--teal) 0 74%,#dff4f2 74% 100%);display:grid;place-items:center;position:relative;margin:auto}
+.score-ring{width:168px;height:168px;border-radius:50%;background:conic-gradient(#e3e9f0 0 100%);display:grid;place-items:center;position:relative;margin:auto}
 .score-ring:before{content:"";width:126px;height:126px;border-radius:50%;background:white;position:absolute}
 .score-inner{position:relative;text-align:center}.score-inner strong{display:block;font-size:52px;line-height:1;font-weight:900;color:#07284f}.score-inner span{color:#3f4e66;font-size:16px;font-weight:800}
 .overall-title{font-size:16px;font-weight:900;color:#193653;margin-bottom:8px}.overall-good{font-size:30px;font-weight:900;color:var(--teal-dark);margin-bottom:10px}.overall-text{color:#48576a;line-height:1.6;font-weight:700;font-size:15px}

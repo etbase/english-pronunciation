@@ -43,22 +43,16 @@ and a bottle of water.</textarea>
   <div class="notice" id="status">✦ 請先輸入句子，播放標準發音後，再按「開始錄音」。</div>
   <audio id="audio" controls style="display:none;width:100%;margin-bottom:12px"></audio>
   <a id="downloadLink" class="primary-link download-link" download="my-pronunciation.webm"><img src="assets/icons/download.svg" alt="">下載音檔</a>
-
-  <div class="mini-cards">
-    <div class="mini"><img src="assets/icons/us-accent.svg" alt=""><strong>美式發音</strong><span>預設 American English</span></div>
-    <div class="mini"><img src="assets/icons/repeat.svg" alt=""><strong>重複練習</strong><span>可不限次練習與重錄</span></div>
-    <div class="mini"><img src="assets/icons/download.svg" alt=""><strong>下載音檔</strong><span>下載自己的錄音</span></div>
-  </div>
 </section>
 
 <section class="card">
   <div class="section-title"><span class="num">2</span>發音分析結果</div>
   <div class="result-top">
-    <div class="score-ring"><div class="score-inner"><strong id="overall">86</strong><span>/100</span></div></div>
+    <div class="score-ring" id="scoreRing"><div class="score-inner"><strong id="overall">--</strong><span>/100</span></div></div>
     <div>
       <div class="overall-title">Overall Score</div>
-      <div class="overall-good" id="scoreText">很棒！😍</div>
-      <div class="overall-text" id="scoreMessage">你的發音清晰，節奏掌握得不錯，<br>再練習連音會更自然喔！</div>
+      <div class="overall-good" id="scoreText"></div>
+      <div class="overall-text" id="scoreMessage">尚未分析，請先錄音並按下「分析發音」查看結果。</div>
     </div>
     <div class="character-box">
       <img id="characterImage" src="assets/characters/character-koala-default.png" alt="角色" onerror="this.outerHTML='<div class=&quot;character-missing&quot;>角色圖片預留區<br>character-koala-default.png</div>'">
@@ -66,12 +60,12 @@ and a bottle of water.</textarea>
   </div>
 
   <div class="metrics">
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-accuracy.svg" alt=""></div><div class="metric-name">發音準確度 <small>Accuracy</small></div><div class="bar"><span style="width:90%"></span></div><div class="value">90 <small>/100</small></div></div>
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-stress.svg" alt=""></div><div class="metric-name">重音 <small>Stress</small></div><div class="bar"><span style="width:82%"></span></div><div class="value">82 <small>/100</small></div></div>
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-rhythm.svg" alt=""></div><div class="metric-name">節奏 <small>Rhythm</small></div><div class="bar"><span style="width:88%"></span></div><div class="value">88 <small>/100</small></div></div>
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-connected-speech.svg" alt=""></div><div class="metric-name">連音 <small>Connected Speech</small></div><div class="bar orange"><span style="width:70%"></span></div><div class="value">70 <small>/100</small></div></div>
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-elision.svg" alt=""></div><div class="metric-name">省音 <small>Elision</small></div><div class="bar orange"><span style="width:75%"></span></div><div class="value">75 <small>/100</small></div></div>
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-fluency.svg" alt=""></div><div class="metric-name">流暢度 <small>Fluency</small></div><div class="bar"><span style="width:85%"></span></div><div class="value">85 <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-accuracy.svg" alt=""></div><div class="metric-name">發音準確度 <small>Accuracy</small></div><div class="bar"><span id="bar-accuracy" style="width:0%"></span></div><div class="value" id="value-accuracy">-- <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-stress.svg" alt=""></div><div class="metric-name">重音 <small>Stress</small></div><div class="bar"><span id="bar-stress" style="width:0%"></span></div><div class="value" id="value-stress">-- <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-rhythm.svg" alt=""></div><div class="metric-name">節奏 <small>Rhythm</small></div><div class="bar"><span id="bar-rhythm" style="width:0%"></span></div><div class="value" id="value-rhythm">-- <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-connected-speech.svg" alt=""></div><div class="metric-name">連音 <small>Connected Speech</small></div><div class="bar orange"><span id="bar-connected" style="width:0%"></span></div><div class="value" id="value-connected">-- <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-elision.svg" alt=""></div><div class="metric-name">省音 <small>Elision</small></div><div class="bar orange"><span id="bar-elision" style="width:0%"></span></div><div class="value" id="value-elision">-- <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-fluency.svg" alt=""></div><div class="metric-name">流暢度 <small>Fluency</small></div><div class="bar"><span id="bar-fluency" style="width:0%"></span></div><div class="value" id="value-fluency">-- <small>/100</small></div></div>
   </div>
   <div class="feedback">★ 分析完成後，這裡會顯示專屬的中文建議與改善重點！</div>
 </section>
