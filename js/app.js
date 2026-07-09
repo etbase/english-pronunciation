@@ -86,7 +86,7 @@ analyzeBtn.addEventListener('click', () => {
     img.onerror = null;
     img.src = score >= 60 ? 'assets/characters/character-koala-happy.png' : 'assets/characters/character-koala-angry.png';
   }
-  document.getElementById('scoreText').textContent = score >= 60 ? 'Great!' : '再加油！';
+  document.getElementById('scoreText').textContent = score >= 60 ? 'Great!' : 'Keep Trying!';
   document.getElementById('scoreMessage').innerHTML = score >= 60
     ? '你的發音清晰，節奏掌握得不錯，<br>再練習連音會更自然喔！'
     : '這次分數偏低，可以先放慢速度，<br>再重新錄一次。';
