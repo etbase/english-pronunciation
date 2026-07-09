@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>使用說明｜ERIC TING English Pronunciation</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <a class="account-icon" href="login.html" aria-label="我的帳戶"><img src="assets/icons/profile.svg" alt=""></a>
+  <nav class="nav">
+    <a href="index.html" class=""><img src="assets/icons/home.svg" alt="">練習</a>
+    <a href="history.html" class=""><img src="assets/icons/history.svg" alt="">歷史紀錄</a>
+  </nav>
+  <a class="help-link" href="help.html"><img src="assets/icons/help.svg" alt="">使用說明</a>
+</aside>
+<main>
+<header class="header">
+  <div class="title">
+    <h1>ERIC TING</h1>
+    <h2>English Pronunciation</h2>
+    <div class="subtitle">MVP 原型｜美式發音朗讀・錄音・模擬評分・繁中回饋</div>
+  </div>
+  <div class="badge">目前為前端原型，正式版可接 Azure Speech API</div>
+</header>
+<section class="card page-card">
+  <div class="section-title"><span class="num">?</span>使用說明 / 版本說明</div>
+  <div class="faq">
+    <details open><summary>現在這個版本可以做什麼？</summary><p>可以輸入英文句子、播放瀏覽器內建美式發音、錄音、模擬分析，並自動保存最近 5 筆紀錄。</p></details>
+    <details><summary>現在的發音分析是真的嗎？</summary><p>不是。目前是前端模擬分數，目的是確認 UI 和流程。正式版會串接 Azure Speech Pronunciation Assessment。</p></details>
+    <details><summary>角色圖片怎麼放？</summary><p>請放到 assets/characters/，檔名為 character-koala-default.png、character-koala-happy.png、character-koala-angry.png。</p></details>
+    <details><summary>為什麼現在先不接 Azure Speech？</summary><p>因為 Azure 是付費 API。先確認介面、需求、操作流程後，再串接真人語音和真正發音分析會比較省成本。</p></details>
+  </div>
+</section>
+</main>
+</div>
+</body>
+</html>

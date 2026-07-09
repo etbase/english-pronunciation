@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>歷史紀錄｜ERIC TING English Pronunciation</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <a class="account-icon" href="login.html" aria-label="我的帳戶"><img src="assets/icons/profile.svg" alt=""></a>
+  <nav class="nav">
+    <a href="index.html" class=""><img src="assets/icons/home.svg" alt="">練習</a>
+    <a href="history.html" class="active"><img src="assets/icons/history.svg" alt="">歷史紀錄</a>
+  </nav>
+  <a class="help-link" href="help.html"><img src="assets/icons/help.svg" alt="">使用說明</a>
+</aside>
+<main>
+<header class="header">
+  <div class="title">
+    <h1>ERIC TING</h1>
+    <h2>English Pronunciation</h2>
+    <div class="subtitle">MVP 原型｜美式發音朗讀・錄音・模擬評分・繁中回饋</div>
+  </div>
+  <div class="badge">目前為前端原型，正式版可接 Azure Speech API</div>
+</header>
+<section class="card page-card">
+  <div class="section-title"><span class="num">2</span>歷史紀錄</div>
+  <p class="hint">自動保存最近 5 筆：英文句子、標準發音播放、自己的錄音暫存。分數先不保存。</p>
+  <div class="history-list" id="historyList"></div>
+</section>
+<script src="js/history.js"></script>
+</main>
+</div>
+</body>
+</html>

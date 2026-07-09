@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>練習｜ERIC TING English Pronunciation</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <a class="account-icon" href="login.html" aria-label="我的帳戶"><img src="assets/icons/profile.svg" alt=""></a>
+  <nav class="nav">
+    <a href="index.html" class="active"><img src="assets/icons/home.svg" alt="">練習</a>
+    <a href="history.html" class=""><img src="assets/icons/history.svg" alt="">歷史紀錄</a>
+  </nav>
+  <a class="help-link" href="help.html"><img src="assets/icons/help.svg" alt="">使用說明</a>
+</aside>
+<main>
+<header class="header">
+  <div class="title">
+    <h1>ERIC TING</h1>
+    <h2>English Pronunciation</h2>
+    <div class="subtitle">MVP 原型｜美式發音朗讀・錄音・模擬評分・繁中回饋</div>
+  </div>
+  <div class="badge">目前為前端原型，正式版可接 Azure Speech API</div>
+</header>
+<div class="grid">
+<section class="card">
+  <div class="section-title"><span class="num">1</span>輸入你想練習的英文句子</div>
+  <textarea id="sentence" maxlength="200">I would like a cup of coffee
+and a bottle of water.</textarea>
+  <div class="counter" id="counter">50 / 200</div>
+  <div class="hint">💡 建議先輸入 1~2 句，正式版可預設美式英文語音。</div>
+
+  <div class="button-row">
+    <button class="btn-listen" id="speakBtn"><img src="assets/icons/speaker.svg" alt="">聽標準發音</button>
+    <button class="btn-record" id="recordBtn"><img src="assets/icons/microphone.svg" alt="">開始錄音</button>
+    <button class="btn-stop" id="stopBtn" disabled><img src="assets/icons/stop.svg" alt="">停止錄音</button>
+    <button class="btn-analyze" id="analyzeBtn" disabled><img src="assets/icons/analysis.svg" alt="">分析發音</button>
+  </div>
+
+  <div class="notice" id="status">✦ 請先輸入句子，播放標準發音後，再按「開始錄音」。</div>
+  <audio id="audio" controls style="display:none;width:100%;margin-bottom:12px"></audio>
+  <a id="downloadLink" class="primary-link download-link" download="my-pronunciation.webm">下載音檔</a>
+
+  <div class="mini-cards">
+    <div class="mini"><img src="assets/icons/us-accent.svg" alt=""><strong>美式發音</strong><span>預設 American English</span></div>
+    <div class="mini"><img src="assets/icons/repeat.svg" alt=""><strong>重複練習</strong><span>可不限次練習與重錄</span></div>
+    <div class="mini"><img src="assets/icons/download.svg" alt=""><strong>下載音檔</strong><span>下載自己的錄音</span></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="section-title"><span class="num">2</span>發音分析結果</div>
+  <div class="result-top">
+    <div class="score-ring"><div class="score-inner"><strong id="overall">86</strong><span>/100</span></div></div>
+    <div>
+      <div class="overall-title">Overall Score</div>
+      <div class="overall-good" id="scoreText">很棒！😍</div>
+      <div class="overall-text" id="scoreMessage">你的發音清晰，節奏掌握得不錯，<br>再練習連音會更自然喔！</div>
+    </div>
+    <div class="character-box">
+      <img id="characterImage" src="assets/characters/character-koala-default.png" alt="角色" onerror="this.outerHTML='<div class=&quot;character-missing&quot;>角色圖片預留區<br>character-koala-default.png</div>'">
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-accuracy.svg" alt=""></div><div class="metric-name">發音準確度 <small>Accuracy</small></div><div class="bar"><span style="width:90%"></span></div><div class="value">90 <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-stress.svg" alt=""></div><div class="metric-name">重音 <small>Stress</small></div><div class="bar"><span style="width:82%"></span></div><div class="value">82 <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-rhythm.svg" alt=""></div><div class="metric-name">節奏 <small>Rhythm</small></div><div class="bar"><span style="width:88%"></span></div><div class="value">88 <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-connected-speech.svg" alt=""></div><div class="metric-name">連音 <small>Connected Speech</small></div><div class="bar orange"><span style="width:70%"></span></div><div class="value">70 <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-elision.svg" alt=""></div><div class="metric-name">省音 <small>Elision</small></div><div class="bar orange"><span style="width:75%"></span></div><div class="value">75 <small>/100</small></div></div>
+    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-fluency.svg" alt=""></div><div class="metric-name">流暢度 <small>Fluency</small></div><div class="bar"><span style="width:85%"></span></div><div class="value">85 <small>/100</small></div></div>
+  </div>
+  <div class="feedback">★ 分析完成後，這裡會顯示專屬的中文建議與改善重點！</div>
+</section>
+</div>
+<footer>Prototype note：此版本的分數為前端模擬，用來確認 UI/流程。正式產品需串接 Azure Speech Pronunciation Assessment。</footer>
+<script src="js/app.js"></script>
+</main>
+</div>
+</body>
+</html>
