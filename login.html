@@ -30,15 +30,14 @@
 </header>
 <section class="card page-card">
   <div class="section-title"><span class="num">↗</span>登入 / 我的帳戶</div>
-  <p class="hint">目前是模擬登入。正式版會改成 Supabase Auth + Google Login。</p>
+  <p class="hint">目前是模擬登入。正式版會改成 Firebase Authentication + Google 登入。</p>
   <div class="form">
     <button class="primary-btn google-btn" id="googleLogin">使用 Google 登入（模擬）</button>
-    <input class="input" id="nameInput" placeholder="或輸入暱稱，例如 Eric">
-    <button class="primary-btn" id="localLogin">登入</button>
   </div>
-  <div class="notice" id="loginStatus" style="margin-top:20px">登入後可使用歷史紀錄。</div>
+  <div class="notice" id="loginStatus" style="margin-top:20px">登入後可使用個人頁面與歷史紀錄。</div>
 </section>
 <script src="js/login.js"></script>
+<script src="js/account-nav.js"></script>
 </main>
 </div>
 </body>

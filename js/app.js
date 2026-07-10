@@ -53,6 +53,7 @@ recordBtn.addEventListener('click', async () => {
       stream.getTracks().forEach(t => t.stop());
       analyzeBtn.disabled = false;
       saveHistory(sentence.value.trim(), blob);
+      updatePracticeStats();
       setStatus('錄音完成。可以播放確認，也可以下載音檔。');
     };
 
@@ -129,4 +130,13 @@ function saveHistory(text, audioBlob){
   reader.onloadend = () => writeRecord(reader.result);
   reader.onerror = () => writeRecord('');
   reader.readAsDataURL(audioBlob);
+}
+
+// 給「我的帳戶」頁面顯示用的累計統計，跟 pronunicationHistory（只留最近 5 筆去重紀錄）分開記錄，
+// 這樣才能顯示「總練習次數」等不會因為去重或超過 5 筆而被蓋掉的數字。
+function updatePracticeStats(){
+  const stats = JSON.parse(localStorage.getItem('pronunciationStats') || '{}');
+  stats.totalRecordings = (stats.totalRecordings || 0) + 1;
+  stats.lastRecordedAt = new Date().toLocaleString('zh-TW');
+  localStorage.setItem('pronunciationStats', JSON.stringify(stats));
 }
