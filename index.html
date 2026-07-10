@@ -14,7 +14,7 @@
 <aside class="sidebar">
   <a class="account-icon" href="login.html" aria-label="我的帳戶"><img src="assets/icons/profile.svg" alt=""></a>
   <nav class="nav">
-    <a href="index.html" class="active"><img src="assets/icons/home.svg" alt="">練習</a>
+    <a href="index.html" class="active"><img src="assets/icons/home.svg" alt="">發音練習</a>
     <a href="history.html" class=""><img src="assets/icons/history.svg" alt="">歷史紀錄</a>
   </nav>
   <a class="help-link" href="help.html"><img src="assets/icons/help.svg" alt="">使用說明</a>
@@ -26,7 +26,6 @@
     <h2>English Pronunciation</h2>
     <div class="subtitle">MVP Prototype | Listen, Record & Get Instant Feedback</div>
   </div>
-  <div class="badge">目前為前端原型，正式版可接 Azure Speech API</div>
 </header>
 <div class="grid">
 <section class="card">
@@ -34,8 +33,6 @@
   <textarea id="sentence" maxlength="200">I would like a cup of coffee
 and a bottle of water.</textarea>
   <div class="counter" id="counter">50 / 200</div>
-  <div class="hint">💡 建議先輸入 1~2 句，正式版可預設美式英文語音。</div>
-
   <div class="button-row">
     <button class="btn-listen" id="speakBtn"><img src="assets/icons/speaker.svg" alt="">聽標準發音</button>
     <button class="btn-record" id="recordBtn"><img src="assets/icons/microphone.svg" alt="">開始錄音</button>
@@ -70,7 +67,6 @@ and a bottle of water.</textarea>
     <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-elision.svg" alt=""></div><div class="metric-name">省音 <small>Elision</small></div><div class="bar orange"><span id="bar-elision" style="width:0%"></span></div><div class="value" id="value-elision">-- <small>/100</small></div></div>
     <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-fluency.svg" alt=""></div><div class="metric-name">流暢度 <small>Fluency</small></div><div class="bar"><span id="bar-fluency" style="width:0%"></span></div><div class="value" id="value-fluency">-- <small>/100</small></div></div>
   </div>
-  <div class="feedback">★ 分析完成後，這裡會顯示專屬的中文建議與改善重點！</div>
 </section>
 </div>
 <footer>Prototype note：此版本的分數為前端模擬，用來確認 UI/流程。正式產品需串接 Azure Speech Pronunciation Assessment。</footer>
