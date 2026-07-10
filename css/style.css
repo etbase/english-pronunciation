@@ -110,6 +110,12 @@ footer{text-align:center;color:#626f83;font-size:14px;font-weight:400;margin-top
   .button-row{gap:8px}
   .button-row button{min-height:64px;border-radius:14px;font-size:11px;gap:4px;padding:6px 2px}
   .button-row button img{width:20px;height:20px}
+  .metric{grid-template-columns:34px 1fr auto;grid-template-areas:"icon name value" "bar bar bar";column-gap:10px;row-gap:8px;padding:14px 0}
+  .metric-icon{grid-area:icon;width:34px;height:34px}
+  .metric-icon img{width:18px;height:18px}
+  .metric-name{grid-area:name;font-size:14px}
+  .value{grid-area:value;font-size:17px}
+  .bar{grid-area:bar}
   .mini-cards{gap:10px}
   .mini{min-height:128px;padding:12px 8px;gap:6px}
   .mini img{width:28px;height:28px}
