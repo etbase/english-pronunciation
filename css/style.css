@@ -106,7 +106,10 @@ footer{text-align:center;color:#626f83;font-size:14px;font-weight:400;margin-top
   main{margin-left:0;padding:24px 18px calc(88px + env(safe-area-inset-bottom))}
   .sidebar{display:none}
   .bottom-nav{display:flex}
-  .grid{grid-template-columns:1fr}.result-top{grid-template-columns:1fr}.character-box,.character-missing{margin:auto}.button-row{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr}.result-top{grid-template-columns:1fr}.character-box,.character-missing{margin:auto}
+  .button-row{gap:8px}
+  .button-row button{min-height:64px;border-radius:14px;font-size:11px;gap:4px;padding:6px 2px}
+  .button-row button img{width:20px;height:20px}
   .mini-cards{gap:10px}
   .mini{min-height:128px;padding:12px 8px;gap:6px}
   .mini img{width:28px;height:28px}
