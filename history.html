@@ -11,8 +11,7 @@
 </head>
 <body>
 <div class="app">
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar">
   <a class="account-icon" href="login.html" aria-label="我的帳戶"><img src="assets/icons/profile.svg" alt=""></a>
   <nav class="nav">
     <a href="index.html" class=""><img src="assets/icons/home.svg" alt="">發音練習</a>
@@ -22,7 +21,6 @@
 </aside>
 <main>
 <header class="header">
-  <button class="menu-toggle" id="menuToggle" aria-label="開啟選單" aria-expanded="false"><span></span><span></span><span></span></button>
   <div class="title">
     <h1>ERIC TING</h1>
     <h2>English Pronunciation</h2>
@@ -35,9 +33,26 @@
   <div class="history-list" id="historyList"></div>
 </section>
 <script src="js/history.js"></script>
-<script src="js/account-nav.js"></script>
-<script src="js/mobile-nav.js"></script>
 </main>
+<nav class="bottom-nav">
+  <a class="bottom-nav-account" href="login.html" id="bottomAccountLink" aria-label="我的帳戶">
+    <span class="bottom-nav-icon" id="bottomAccountIcon"><img src="assets/icons/profile.svg" alt=""></span>
+    <span>帳戶</span>
+  </a>
+  <a href="index.html" class="">
+    <span class="bottom-nav-icon"><img src="assets/icons/home.svg" alt=""></span>
+    <span>發音練習</span>
+  </a>
+  <a href="history.html" class="active">
+    <span class="bottom-nav-icon"><img src="assets/icons/history.svg" alt=""></span>
+    <span>歷史紀錄</span>
+  </a>
+  <a href="help.html" class="">
+    <span class="bottom-nav-icon"><img src="assets/icons/help.svg" alt=""></span>
+    <span>使用說明</span>
+  </a>
+</nav>
+<script src="js/account-nav.js"></script>
 </div>
 </body>
 </html>

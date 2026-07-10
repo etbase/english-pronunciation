@@ -13,12 +13,19 @@ body{margin:0;font-family:"Noto Sans TC",-apple-system,BlinkMacSystemFont,"Segoe
 .metric-name small{font-weight:800}
 .app{min-height:100vh}
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:150px;background:linear-gradient(180deg,#f3f8fd,#ffffff);border-right:1px solid rgba(230,225,210,.45);padding:28px 14px;display:flex;flex-direction:column;align-items:center;gap:26px;overflow-y:auto;z-index:20}
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(8,37,74,.35);z-index:15}
-.menu-toggle{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:44px;height:44px;min-height:44px;flex-shrink:0;border-radius:12px;background:white;border:1px solid var(--line);cursor:pointer;padding:0}
-.menu-toggle span{display:block;width:20px;height:2px;background:#33435c;border-radius:2px}
 .account-icon{width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,var(--lake),var(--lake-dark));display:grid;place-items:center;box-shadow:0 12px 26px rgba(79,184,172,.22);text-decoration:none}
 .account-icon img{width:52px;height:52px;filter:brightness(0) invert(1)}
 .account-icon-initial{color:white;font-size:32px;font-weight:900;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.bottom-nav{display:none;position:fixed;left:0;right:0;bottom:0;background:#ffffff;border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:20;box-shadow:0 -10px 24px rgba(8,37,74,.08)}
+.bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:1;padding:6px 2px;color:#5f718a;text-decoration:none;font-size:11px;font-weight:400}
+.bottom-nav-icon{width:26px;height:26px;display:grid;place-items:center;border-radius:10px}
+.bottom-nav-icon img{width:22px;height:22px}
+.bottom-nav a.active{color:var(--teal-dark);font-weight:700}
+.bottom-nav a.active .bottom-nav-icon{background:linear-gradient(135deg,#11c7bd,#0db3a9)}
+.bottom-nav a.active .bottom-nav-icon img{filter:brightness(0) invert(1)}
+.bottom-nav-account .bottom-nav-icon{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--lake),var(--lake-dark))}
+.bottom-nav-account .bottom-nav-icon img{width:16px;height:16px;filter:brightness(0) invert(1)}
+.bottom-nav-account .bottom-nav-icon .account-icon-initial{font-size:13px}
 .nav{display:flex;flex-direction:column;gap:18px;width:100%;margin-top:42px}
 .nav a{display:flex;align-items:center;gap:10px;width:100%;padding:14px 10px;border-radius:16px;font-size:14px;font-weight:400;color:#34435b;text-decoration:none;white-space:nowrap}
 .nav a img{width:22px;height:22px}
@@ -99,10 +106,8 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .faq{display:grid;gap:16px}.faq details{background:white;border:1px solid var(--line);border-radius:16px;padding:16px}.faq summary{font-weight:700;cursor:pointer}.faq p{color:#526176;line-height:1.7}
 footer{text-align:center;color:#626f83;font-size:14px;font-weight:400;margin-top:24px}
 @media(max-width:1100px){
-  main{margin-left:0;padding:24px 18px}
-  .menu-toggle{display:flex}
-  .sidebar{transform:translateX(-100%);transition:transform .25s ease;box-shadow:none}
-  .sidebar.open{transform:translateX(0);box-shadow:16px 0 34px rgba(8,37,74,.18)}
-  .sidebar-overlay.open{display:block}
+  main{margin-left:0;padding:24px 18px calc(88px + env(safe-area-inset-bottom))}
+  .sidebar{display:none}
+  .bottom-nav{display:flex}
   .grid{grid-template-columns:1fr}.result-top{grid-template-columns:1fr}.character-box,.character-missing{margin:auto}.button-row,.mini-cards{grid-template-columns:1fr 1fr}
 }
