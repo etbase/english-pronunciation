@@ -11,7 +11,8 @@
 </head>
 <body>
 <div class="app">
-<aside class="sidebar">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<aside class="sidebar" id="sidebar">
   <a class="account-icon" href="login.html" aria-label="我的帳戶"><img src="assets/icons/profile.svg" alt=""></a>
   <nav class="nav">
     <a href="index.html" class=""><img src="assets/icons/home.svg" alt="">發音練習</a>
@@ -21,6 +22,7 @@
 </aside>
 <main>
 <header class="header">
+  <button class="menu-toggle" id="menuToggle" aria-label="開啟選單" aria-expanded="false"><span></span><span></span><span></span></button>
   <div class="title">
     <h1>ERIC TING</h1>
     <h2>English Pronunciation</h2>
@@ -67,6 +69,7 @@
 </section>
 <script src="js/profile.js"></script>
 <script src="js/account-nav.js"></script>
+<script src="js/mobile-nav.js"></script>
 </main>
 </div>
 </body>

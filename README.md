@@ -46,6 +46,7 @@ english-pronunciation/
 │   ├── login.js          # 登入邏輯（目前為模擬登入）
 │   ├── profile.js        # 我的帳戶頁邏輯（顯示使用者資料、編輯名字、登出）
 │   ├── account-nav.js    # 依登入狀態切換左上角帳戶圖示要導向登入頁或個人頁面
+│   ├── mobile-nav.js     # 小螢幕的漢堡選單開關（側邊欄滑出/收合）
 │   └── history.js        # 歷史紀錄讀取與渲染
 ├── assets/
 │   ├── characters/       # 角色情緒圖（預設／開心／生氣）
