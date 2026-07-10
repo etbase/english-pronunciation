@@ -50,8 +50,8 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .btn-stop:hover:not(:disabled){background:linear-gradient(135deg,#ff9d9d,#ff6363)}
 .btn-analyze{background:linear-gradient(135deg,#ffdb8f,#ffbb42);color:#fff} .btn-analyze img{filter:brightness(0) invert(1)}
 .btn-analyze:hover:not(:disabled){background:linear-gradient(135deg,#ffcf6e,#ffa920)}
-.notice{border-radius:16px;background:linear-gradient(135deg,#edfaff,#eff8ff);padding:18px 20px;font-size:15px;color:#006f8f;font-weight:400;margin-bottom:20px}
-.download-link{display:none;margin-bottom:28px;text-decoration:none;width:fit-content}
+.notice{border-radius:16px;background:linear-gradient(135deg,#ebf2f3,#f1f7f7);padding:18px 20px;font-size:15px;color:#3d7863;font-weight:400;margin-bottom:20px}
+a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration:none;width:fit-content}
 .mini-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .mini{min-height:150px;border:1px solid var(--line);border-radius:18px;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;padding:16px}
 .mini img{width:36px;height:36px}

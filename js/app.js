@@ -48,7 +48,7 @@ recordBtn.addEventListener('click', async () => {
       const ext = actualType.includes('mp4') ? 'm4a' : actualType.includes('ogg') ? 'ogg' : 'webm';
       downloadLink.href = currentBlobUrl;
       downloadLink.download = `my-pronunciation.${ext}`;
-      downloadLink.style.display = 'inline-flex';
+      downloadLink.style.display = 'flex';
 
       stream.getTracks().forEach(t => t.stop());
       analyzeBtn.disabled = false;
