@@ -18,12 +18,35 @@ function updateCounter(){ counter.textContent = `${sentence.value.length} / 200`
 sentence.addEventListener('input', updateCounter);
 updateCounter();
 
+// 瀏覽器內建語音（Web Speech API）免費但每個作業系統提供的語音不同，
+// 優先挑選使用者指定的 Daniel，若裝置上沒有這個語音則自動退回英文語音。
+let voices = [];
+function loadVoices(){ voices = window.speechSynthesis.getVoices(); }
+loadVoices();
+if('onvoiceschanged' in window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function pickVoice(){
+  return voices.find(v => v.name === 'Daniel')
+    || voices.find(v => v.name.includes('Daniel'))
+    || voices.find(v => v.lang === 'en-US')
+    || voices.find(v => v.lang && v.lang.startsWith('en'))
+    || null;
+}
+
 speakBtn.addEventListener('click', () => {
   const text = sentence.value.trim();
   if(!text){ setStatus('請先輸入英文句子。'); return; }
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'en-US';
+  const voice = pickVoice();
+  if(voice){
+    utter.voice = voice;
+    utter.lang = voice.lang;
+  }else{
+    utter.lang = 'en-US';
+  }
   utter.rate = 0.9;
   window.speechSynthesis.speak(utter);
   setStatus('正在播放標準發音。正式版會改用 Azure AI 語音。');
