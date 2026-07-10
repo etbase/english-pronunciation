@@ -41,9 +41,13 @@ button{border:0;min-height:82px;border-radius:18px;cursor:pointer;color:white;fo
 button img{width:26px;height:26px}
 button:disabled{opacity:.55;cursor:not-allowed}
 .btn-listen{background:linear-gradient(135deg,#0ec4b9,#08a7a3)} .btn-listen img{filter:brightness(0) invert(1)}
-.btn-record{background:linear-gradient(135deg,var(--lake),var(--lake-dark))} .btn-record img{filter:brightness(0) invert(1)}
-.btn-stop{background:linear-gradient(135deg,#ffc8c8,#ff9f9f);color:var(--red-text)} .btn-stop img{filter:brightness(0) invert(1)}
-.btn-analyze{background:linear-gradient(135deg,#ffe5a7,#ffd074);color:var(--yellow-text)} .btn-analyze img{filter:brightness(0) invert(1)}
+.btn-listen:hover:not(:disabled){background:linear-gradient(135deg,#0bb0a6,#078f8b)}
+.btn-record{background:linear-gradient(135deg,#8fe2d4,#3aa89a)} .btn-record img{filter:brightness(0) invert(1)}
+.btn-record:hover:not(:disabled){background:linear-gradient(135deg,#75d3c3,#2f9186)}
+.btn-stop{background:linear-gradient(135deg,#ffb8b8,#ff7d7d);color:var(--red-text)} .btn-stop img{filter:brightness(0) invert(1)}
+.btn-stop:hover:not(:disabled){background:linear-gradient(135deg,#ff9d9d,#ff6363)}
+.btn-analyze{background:linear-gradient(135deg,#ffdb8f,#ffbb42);color:var(--yellow-text)} .btn-analyze img{filter:brightness(0) invert(1)}
+.btn-analyze:hover:not(:disabled){background:linear-gradient(135deg,#ffcf6e,#ffa920)}
 .notice{border-radius:16px;background:linear-gradient(135deg,#edfaff,#eff8ff);padding:18px 20px;font-size:15px;color:#006f8f;font-weight:400;margin-bottom:20px}
 .download-link{display:none;margin-bottom:28px;text-decoration:none;width:fit-content}
 .mini-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
@@ -63,10 +67,16 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .feedback{margin-top:22px;padding:18px 22px;border-radius:16px;background:linear-gradient(135deg,#e8f8fb,#f1fbff);color:#00798e;font-weight:400;font-size:16px}
 .page-card{max-width:820px}.form{display:grid;gap:14px}.input{width:100%;border:1px solid var(--line);border-radius:16px;padding:15px 16px;font-size:16px}
 .primary-link,.primary-btn{background:linear-gradient(135deg,#11c7bd,#0db3a9);color:white;border:0;border-radius:16px;padding:14px 18px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}.google-btn{background:white;color:#34435b;border:1px solid var(--line)}
+.primary-link:hover,.primary-btn:hover:not(:disabled){background:linear-gradient(135deg,#0eb3a9,#0a9791)}
 .primary-link img,.primary-btn img{width:20px;height:20px;filter:brightness(0) invert(1)}
+.download-link{background:linear-gradient(135deg,#eef1f5,#c7d2dd);color:#33435c}
+.download-link:hover{background:linear-gradient(135deg,#dfe4ea,#b3c0cf)}
+.download-link img{filter:none}
 .history-list{display:grid;gap:14px}.history-item{border:1px solid var(--line);border-radius:18px;padding:18px;background:white;display:grid;gap:10px}.history-actions{display:flex;gap:10px;flex-wrap:wrap}.small-btn{min-height:auto;border-radius:12px;padding:10px 12px;font-size:14px;background:#eef7ff;color:#0b2b55;display:inline-flex;flex-direction:row}
 .btn-outline{background:white;color:#34435b;border:1px solid var(--line)}
 .btn-danger-outline{background:white;color:#c23b3b;border:1px solid #f3d4d4}
+.google-btn:hover,.btn-outline:hover{background:#eef1f5}
+.btn-danger-outline:hover{background:#fbeaea}
 .profile-head{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
 .avatar{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,var(--lake),var(--lake-dark));color:white;display:grid;place-items:center;font-size:34px;font-weight:900;flex-shrink:0}
 .profile-name-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
