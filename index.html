@@ -13,6 +13,7 @@
 <div class="app">
 <aside class="sidebar">
   <a class="account-icon" href="login.html" aria-label="我的帳戶"><img src="assets/icons/profile.svg" alt=""></a>
+  <script>(function(){try{var u=JSON.parse(localStorage.getItem('pronunciationUser')||'null');if(u&&u.name){var a=document.currentScript.previousElementSibling;a.href='profile.html';a.innerHTML='<span class="account-icon-initial">'+(u.name.trim().charAt(0)||'?').toUpperCase()+'</span>';}}catch(e){}})();</script>
   <nav class="nav">
     <a href="index.html" class="active"><img src="assets/icons/home.svg" alt="">發音練習</a>
     <a href="history.html" class=""><img src="assets/icons/history.svg" alt="">歷史紀錄</a>
