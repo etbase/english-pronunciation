@@ -44,9 +44,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .btn-listen:hover:not(:disabled){background:linear-gradient(135deg,#0bb0a6,#078f8b)}
 .btn-record{background:linear-gradient(135deg,#8fe2d4,#3aa89a)} .btn-record img{filter:brightness(0) invert(1)}
 .btn-record:hover:not(:disabled){background:linear-gradient(135deg,#75d3c3,#2f9186)}
-.btn-stop{background:linear-gradient(135deg,#ffb8b8,#ff7d7d);color:var(--red-text)} .btn-stop img{filter:brightness(0) invert(1)}
+.btn-stop{background:linear-gradient(135deg,#ffb8b8,#ff7d7d);color:#fff} .btn-stop img{filter:brightness(0) invert(1)}
 .btn-stop:hover:not(:disabled){background:linear-gradient(135deg,#ff9d9d,#ff6363)}
-.btn-analyze{background:linear-gradient(135deg,#ffdb8f,#ffbb42);color:var(--yellow-text)} .btn-analyze img{filter:brightness(0) invert(1)}
+.btn-analyze{background:linear-gradient(135deg,#ffdb8f,#ffbb42);color:#fff} .btn-analyze img{filter:brightness(0) invert(1)}
 .btn-analyze:hover:not(:disabled){background:linear-gradient(135deg,#ffcf6e,#ffa920)}
 .notice{border-radius:16px;background:linear-gradient(135deg,#edfaff,#eff8ff);padding:18px 20px;font-size:15px;color:#006f8f;font-weight:400;margin-bottom:20px}
 .download-link{display:none;margin-bottom:28px;text-decoration:none;width:fit-content}
