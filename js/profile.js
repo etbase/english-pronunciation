@@ -58,6 +58,7 @@ saveNameBtn.addEventListener('click', () => {
   localStorage.setItem('pronunciationUser', JSON.stringify(current));
   renderUser(current);
   editNameForm.style.display = 'none';
+  if(window.refreshAccountIcon) window.refreshAccountIcon();
 });
 
 logoutBtn.addEventListener('click', () => {
