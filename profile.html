@@ -57,14 +57,16 @@
     <div class="profile-row"><span>加入時間</span><span id="profileJoined">--</span></div>
   </div>
 
-  <p class="hint hint-icon" style="margin-top:28px"><img src="assets/icons/folder.svg" alt="">資料夾</p>
+  <button class="primary-btn btn-danger-outline btn-compact" id="logoutBtn" style="margin-top:20px">登出</button>
+</section>
+
+<section class="card page-card" style="margin-top:20px">
+  <div class="section-title"><span class="num"><img src="assets/icons/folder.svg" alt=""></span>資料夾</div>
   <div class="folder-create-row">
     <input type="text" id="newFolderInput" class="input" placeholder="新增資料夾名稱" maxlength="20">
     <button type="button" id="newFolderBtn" class="primary-btn btn-compact">新增資料夾</button>
   </div>
   <div class="folder-list" id="folderList"></div>
-
-  <button class="primary-btn btn-danger-outline btn-compact" id="logoutBtn" style="margin-top:28px">登出</button>
 </section>
 <script src="js/folders.js"></script>
 <script src="js/audio-player.js"></script>
