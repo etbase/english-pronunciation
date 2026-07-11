@@ -73,6 +73,7 @@ function renderFolders(){
       <details class="folder-card" data-folder-id="${f.id}"${openFolderIds.has(f.id) ? ' open' : ''}>
         <summary>
           <div class="folder-card-header">
+            <span class="folder-toggle-arrow"></span>
             <img src="assets/icons/folder.svg" alt="">
             ${isRenaming ? `
               <div class="folder-rename-form" onclick="event.stopPropagation()">
@@ -93,19 +94,25 @@ function renderFolders(){
           </div>
         </summary>
         <div class="folder-sentences">
-          ${items.length ? items.map(s => `
+          ${items.length ? items.map(s => {
+            const record = getHistoryRecordForText(s.text);
+            return `
             <div class="folder-sentence-row">
               <div class="folder-sentence-top">
                 <span class="folder-sentence-text">${escapeHtmlLocal(s.text)}</span>
-                <span class="folder-sentence-date">${s.savedAt}</span>
+                ${record && record.score != null ? `<span class="history-score">${record.score} 分</span>` : ''}
               </div>
+              <span class="folder-sentence-date">收藏於 ${s.savedAt}</span>
               <div class="folder-sentence-actions">
                 <button type="button" class="small-btn" onclick="speakFromFolder('${encodeURIComponent(s.text)}')">聽標準發音</button>
+                ${record && record.audioUrl ? `<audio src="${record.audioUrl}"></audio>` : ''}
                 <button type="button" class="small-btn btn-outline" onclick="rePracticeFromFolder('${encodeURIComponent(s.text)}')">重新練習</button>
                 <button type="button" class="small-btn btn-danger-outline" onclick="removeSavedSentence('${encodeURIComponent(s.text)}')">移除</button>
               </div>
+              ${!record || !record.audioUrl ? '<p class="folder-sentence-hint">還沒有這句話的錄音，回練習頁錄音後會自動顯示在這裡。</p>' : ''}
             </div>
-          `).join('') : '<p class="folder-empty">這個資料夾還沒有收藏的句子。</p>'}
+          `;
+          }).join('') : '<p class="folder-empty">這個資料夾還沒有收藏的句子。</p>'}
         </div>
       </details>
     `;
@@ -117,6 +124,8 @@ function renderFolders(){
       else openFolderIds.delete(d.dataset.folderId);
     });
   });
+
+  folderList.querySelectorAll('audio').forEach(el => enhanceAudioPlayer(el));
 }
 
 function startRenameFolder(id){ renamingFolderId = id; renderFolders(); }

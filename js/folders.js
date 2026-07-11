@@ -76,6 +76,13 @@ function unsaveSentence(text){
   saveSavedSentences(list);
 }
 
+// 資料夾本身不會另外存一份錄音檔，播放的音檔是用句子文字去歷史紀錄裡找回「這句話最新一次的錄音」。
+// 歷史紀錄本來就只保留每句話最後一次的錄音結果，剛好可以直接沿用，不用重複存一份音檔佔空間。
+function getHistoryRecordForText(text){
+  const records = JSON.parse(localStorage.getItem('pronunciationHistory') || '[]');
+  return records.find(r => r.text === text) || null;
+}
+
 // 收藏用的小面板：點資料夾圖示後，跳出來選「放進哪個資料夾」或「新增資料夾」。
 // 用同一個面板 DOM，動態附加在點擊的按鈕旁邊，練習頁、歷史紀錄頁都能共用。
 let activeFolderPopover = null;

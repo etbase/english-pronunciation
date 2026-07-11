@@ -162,8 +162,10 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .folder-create-row .input{flex:1}
 .folder-list{display:grid;gap:14px}
 .folder-card{border:1px solid var(--line);border-radius:18px;background:white;padding:16px 18px}
-.folder-card summary{cursor:pointer}
-.folder-card summary::marker{color:var(--muted)}
+.folder-card summary{cursor:pointer;list-style:none}
+.folder-card summary::-webkit-details-marker{display:none}
+.folder-toggle-arrow{width:11px;height:11px;flex-shrink:0;border-right:2.5px solid var(--muted);border-bottom:2.5px solid var(--muted);transform:rotate(-45deg);transition:transform .2s ease;margin:0 2px 0 2px}
+.folder-card[open] .folder-toggle-arrow{transform:rotate(45deg)}
 .folder-card-header{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;width:calc(100% - 20px);vertical-align:middle}
 .folder-card-header img{width:18px;height:18px;filter:var(--icon-tint)}
 .folder-card-header strong{font-size:16px;color:var(--text)}
@@ -176,7 +178,9 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .folder-sentence-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .folder-sentence-text{color:var(--text);font-size:14px;font-weight:500;flex:1;min-width:160px}
 .folder-sentence-date{color:var(--muted);font-size:13px;flex-shrink:0}
-.folder-sentence-actions{display:flex;gap:8px;flex-wrap:wrap}
+.folder-sentence-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.folder-sentence-actions .audio-player{flex:1;min-width:160px;margin:0}
+.folder-sentence-hint{color:var(--muted);font-size:13px;margin:0;font-weight:400}
 .folder-empty{color:var(--muted);font-size:14px;margin:14px 0 0;font-weight:400}
 .faq{display:grid;gap:16px}.faq details{background:white;border:1px solid var(--line);border-radius:16px;padding:16px}.faq summary{font-weight:700;cursor:pointer}.faq p{color:var(--muted);line-height:1.7}
 footer{text-align:center;color:var(--muted);font-size:14px;font-weight:400;margin-top:24px}
