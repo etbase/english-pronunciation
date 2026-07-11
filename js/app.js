@@ -8,6 +8,11 @@ const analyzeBtn = document.getElementById('analyzeBtn');
 const statusEl = document.getElementById('status');
 const audio = document.getElementById('audio');
 const downloadLink = document.getElementById('downloadLink');
+const slowToggle = document.getElementById('slowToggle');
+const sentenceBankSelect = document.getElementById('sentenceBank');
+const randomSentenceBtn = document.getElementById('randomSentenceBtn');
+const volumeMeter = document.getElementById('volumeMeter');
+const volumeFill = document.getElementById('volumeFill');
 
 let mediaRecorder;
 let chunks = [];
@@ -17,6 +22,66 @@ function setStatus(text){ statusEl.textContent = text; }
 function updateCounter(){ counter.textContent = `${sentence.value.length} / 200`; }
 sentence.addEventListener('input', updateCounter);
 updateCounter();
+
+// 從歷史紀錄按「重新練習」跳過來時，網址會帶 ?sentence=...，載入後直接帶入句子。
+const prefillSentence = new URLSearchParams(location.search).get('sentence');
+if(prefillSentence){
+  sentence.value = prefillSentence;
+  updateCounter();
+  history.replaceState(null, '', location.pathname);
+}
+
+// 內建例句：分類放在下拉選單裡，也給「隨機一句」按鈕共用同一份清單。
+const sentenceBank = {
+  '日常生活': [
+    'I would like a cup of coffee and a bottle of water.',
+    'Could you please repeat that?',
+    'Thank you very much for your help.',
+    'The weather is beautiful today.'
+  ],
+  '旅遊': [
+    'Can you tell me how to get to the station?',
+    'Where is the nearest restroom?',
+    'I need to check in for my flight.',
+    'How much does this cost?'
+  ],
+  '職場': [
+    "I'm looking forward to seeing you soon.",
+    'What time does the meeting start?',
+    "Could you send me the report by tomorrow?",
+    'I appreciate your feedback on this project.'
+  ]
+};
+
+if(sentenceBankSelect){
+  Object.entries(sentenceBank).forEach(([category, sentences]) => {
+    const group = document.createElement('optgroup');
+    group.label = category;
+    sentences.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s;
+      group.appendChild(opt);
+    });
+    sentenceBankSelect.appendChild(group);
+  });
+  sentenceBankSelect.addEventListener('change', () => {
+    if(sentenceBankSelect.value){
+      sentence.value = sentenceBankSelect.value;
+      updateCounter();
+      sentenceBankSelect.value = '';
+    }
+  });
+}
+
+if(randomSentenceBtn){
+  const allSentences = Object.values(sentenceBank).flat();
+  randomSentenceBtn.addEventListener('click', () => {
+    const pick = allSentences[Math.floor(Math.random() * allSentences.length)];
+    sentence.value = pick;
+    updateCounter();
+  });
+}
 
 // 瀏覽器內建語音（Web Speech API）免費但每個作業系統提供的語音不同，
 // 優先挑選使用者指定的 Daniel，若裝置上沒有這個語音則自動退回英文語音。
@@ -47,10 +112,59 @@ speakBtn.addEventListener('click', () => {
   }else{
     utter.lang = 'en-US';
   }
-  utter.rate = 0.9;
+  utter.rate = (slowToggle && slowToggle.checked) ? 0.6 : 0.9;
   window.speechSynthesis.speak(utter);
   setStatus('正在播放標準發音。正式版會改用 Azure AI 語音。');
 });
+
+// 用 Web Audio API 讀麥克風音量，錄音時顯示跳動的音量條，讓使用者確定真的有收到聲音。
+let volumeAudioCtx, volumeAnalyser, volumeData, volumeRAF;
+function startVolumeMeter(stream){
+  try{
+    volumeAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = volumeAudioCtx.createMediaStreamSource(stream);
+    volumeAnalyser = volumeAudioCtx.createAnalyser();
+    volumeAnalyser.fftSize = 256;
+    source.connect(volumeAnalyser);
+    volumeData = new Uint8Array(volumeAnalyser.frequencyBinCount);
+    if(volumeMeter) volumeMeter.style.display = 'flex';
+
+    const tick = () => {
+      volumeAnalyser.getByteFrequencyData(volumeData);
+      let sum = 0;
+      for(let i = 0; i < volumeData.length; i++) sum += volumeData[i];
+      const avg = sum / volumeData.length;
+      const pct = Math.min(100, (avg / 90) * 100);
+      if(volumeFill) volumeFill.style.width = `${pct}%`;
+      volumeRAF = requestAnimationFrame(tick);
+    };
+    tick();
+  }catch(e){ /* 部分瀏覽器可能不支援 Web Audio API，音量條先不顯示即可，不影響錄音本身 */ }
+}
+
+function stopVolumeMeter(){
+  if(volumeRAF) cancelAnimationFrame(volumeRAF);
+  volumeRAF = null;
+  if(volumeAudioCtx){ volumeAudioCtx.close(); volumeAudioCtx = null; }
+  if(volumeFill) volumeFill.style.width = '0%';
+  if(volumeMeter) volumeMeter.style.display = 'none';
+}
+
+// 幫下載檔案取個看得懂的檔名（句子開頭幾個字＋錄音時間），避免每次都同名被瀏覽器自動編號。
+function slugify(text){
+  const slug = text.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 5)
+    .join('-');
+  return slug || 'recording';
+}
+function timestampLabel(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+}
 
 recordBtn.addEventListener('click', async () => {
   try{
@@ -62,6 +176,7 @@ recordBtn.addEventListener('click', async () => {
 
     mediaRecorder.ondataavailable = e => chunks.push(e.data);
     mediaRecorder.onstop = () => {
+      stopVolumeMeter();
       const actualType = mediaRecorder.mimeType || 'audio/webm';
       const blob = new Blob(chunks,{type:actualType});
       currentBlobUrl = URL.createObjectURL(blob);
@@ -70,7 +185,7 @@ recordBtn.addEventListener('click', async () => {
 
       const ext = actualType.includes('mp4') ? 'm4a' : actualType.includes('ogg') ? 'ogg' : 'webm';
       downloadLink.href = currentBlobUrl;
-      downloadLink.download = `my-pronunciation.${ext}`;
+      downloadLink.download = `pronunciation-${slugify(sentence.value.trim())}-${timestampLabel()}.${ext}`;
       downloadLink.style.display = 'flex';
 
       stream.getTracks().forEach(t => t.stop());
@@ -81,6 +196,7 @@ recordBtn.addEventListener('click', async () => {
     };
 
     mediaRecorder.start();
+    startVolumeMeter(stream);
     recordBtn.disabled = true;
     stopBtn.disabled = false;
     analyzeBtn.disabled = true;
