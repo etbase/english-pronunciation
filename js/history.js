@@ -13,7 +13,10 @@ function renderHistory(){
   }
   historyList.innerHTML = records.map((r, index) => `
     <div class="history-item">
-      <strong>${index + 1}. ${escapeHtml(r.text)}</strong>
+      <div class="history-item-top">
+        <strong>${index + 1}. ${escapeHtml(r.text)}</strong>
+        ${r.score != null ? `<span class="history-score">${r.score} 分</span>` : `<span class="history-score history-score-pending">尚未分析</span>`}
+      </div>
       <span style="color:#63718a;font-size:14px">${r.createdAt}</span>
       <div class="history-actions">
         <button class="small-btn" onclick="speak('${encodeURIComponent(r.text)}')">聽標準發音</button>

@@ -46,9 +46,13 @@ textarea{width:100%;height:178px;resize:none;border:1.8px solid rgba(11,184,174,
 .counter{text-align:right;color:#627089;font-size:14px;font-weight:400;margin-top:-34px;margin-right:18px;position:relative;z-index:1}
 .hint{margin:26px 0 22px;color:#526176;font-size:15px;font-weight:400}
 .hint-icon{display:flex;align-items:center;gap:8px}.hint-icon img{width:16px;height:16px}
-.slow-toggle{display:flex;align-items:center;gap:6px;font-size:14px;color:#526176;margin-top:10px;cursor:pointer;user-select:none}
-.slow-toggle input{cursor:pointer}
-.slow-toggle img{width:16px;height:16px;filter:invert(40%) sepia(90%) saturate(865%) hue-rotate(142deg) brightness(89%) contrast(103%)}
+.slow-toggle{display:inline-flex;flex-direction:row;min-height:auto;align-items:center;gap:7px;font-size:14px;color:#526176;font-weight:500;margin-top:22px;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:white;cursor:pointer;user-select:none;transition:background .15s,color .15s,border-color .15s}
+.slow-toggle:hover{background:#f3f7f8;border-color:rgba(11,184,174,.55)}
+.slow-toggle img{width:16px;height:16px;filter:invert(40%) sepia(90%) saturate(865%) hue-rotate(142deg) brightness(89%) contrast(103%);transition:filter .15s}
+.slow-toggle-rate{font-family:"SF Mono","Menlo","Consolas",monospace;font-weight:700;color:var(--teal-dark)}
+.slow-toggle.active{background:var(--teal-dark);border-color:var(--teal-dark);color:white}
+.slow-toggle.active img{filter:brightness(0) invert(1)}
+.slow-toggle.active .slow-toggle-rate{color:white}
 .volume-meter{display:flex;align-items:center;gap:10px;margin-top:18px;margin-bottom:4px}
 .volume-label{display:flex;align-items:center;gap:6px;font-size:13px;color:#526176;white-space:nowrap}
 .volume-label img{width:15px;height:15px;filter:invert(40%) sepia(90%) saturate(865%) hue-rotate(142deg) brightness(89%) contrast(103%)}
@@ -91,6 +95,9 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .download-link:hover{background:#dbe9fb}
 .download-link img{filter:none}
 .history-list{display:grid;gap:14px}.history-item{border:1px solid var(--line);border-radius:18px;padding:18px;background:white;display:grid;gap:10px}.history-actions{display:flex;gap:10px;flex-wrap:wrap}.small-btn{min-height:auto;border-radius:12px;padding:10px 12px;font-size:14px;background:#eef7ff;color:#0b2b55;display:inline-flex;flex-direction:row}
+.history-item-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.history-score{flex-shrink:0;padding:4px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#e5f6f0;color:#0e8f6f;white-space:nowrap}
+.history-score-pending{background:#f1f3f6;color:#8b96a8;font-weight:500}
 .small-btn:hover{background:#dbe9fb}
 .btn-outline{background:white;color:#34435b;border:1px solid var(--line)}
 .btn-danger-outline{background:white;color:#c23b3b;border:1px solid #f3d4d4}
@@ -112,14 +119,16 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .plan-badge{background:#eef7ff;color:#0b2b55;border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700}
 .faq{display:grid;gap:16px}.faq details{background:white;border:1px solid var(--line);border-radius:16px;padding:16px}.faq summary{font-weight:700;cursor:pointer}.faq p{color:#526176;line-height:1.7}
 footer{text-align:center;color:#626f83;font-size:14px;font-weight:400;margin-top:24px}
-/* 側邊欄還在、但視窗沒那麼寬時（例如筆電視窗沒開滿），避免文字被固定寬度的欄位擠到重疊、擠成一字一行 */
+/* 側邊欄還在、但視窗沒那麼寬時（例如筆電視窗沒開滿），避免文字被固定寬度的欄位擠到重疊、擠成一字一行。
+   角色圖片保留，改成縮小並移到文字下方整行置中，不占用文字的橫向空間。 */
 @media(min-width:1101px) and (max-width:1380px){
   .button-row{gap:12px}
   .button-row button{font-size:14px}
-  .result-top{grid-template-columns:150px 1fr;gap:18px}
-  .character-box,.character-missing{display:none}
-  .score-ring{width:150px;height:150px}
-  .score-ring:before{width:112px;height:112px}
+  .result-top{grid-template-columns:140px 1fr;grid-template-areas:"ring text" "char char";column-gap:16px;row-gap:12px}
+  .score-ring{grid-area:ring;width:140px;height:140px;margin:0}
+  .score-ring:before{width:104px;height:104px}
+  .result-top>div:nth-child(2){grid-area:text}
+  .character-box,.character-missing{grid-area:char;width:130px;height:140px;margin:0 auto}
 }
 @media(max-width:1100px){
   main{margin-left:0;padding:24px 18px calc(88px + env(safe-area-inset-bottom))}

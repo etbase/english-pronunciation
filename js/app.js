@@ -9,6 +9,7 @@ const statusEl = document.getElementById('status');
 const audio = document.getElementById('audio');
 const downloadLink = document.getElementById('downloadLink');
 const slowToggle = document.getElementById('slowToggle');
+const slowToggleRate = document.getElementById('slowToggleRate');
 const volumeMeter = document.getElementById('volumeMeter');
 const volumeFill = document.getElementById('volumeFill');
 
@@ -46,6 +47,18 @@ function pickVoice(){
     || null;
 }
 
+// 慢速播放改用按鈕點擊切換（而不是勾選框），按一下在 1.0（正常）／0.5（慢速）之間切換，
+// 圖示文字顏色也會跟著變化，讓使用者更清楚知道目前是哪個狀態。
+let isSlowPlayback = false;
+if(slowToggle){
+  slowToggle.addEventListener('click', () => {
+    isSlowPlayback = !isSlowPlayback;
+    slowToggle.classList.toggle('active', isSlowPlayback);
+    slowToggle.setAttribute('aria-pressed', String(isSlowPlayback));
+    if(slowToggleRate) slowToggleRate.textContent = isSlowPlayback ? '0.5' : '1.0';
+  });
+}
+
 speakBtn.addEventListener('click', () => {
   const text = sentence.value.trim();
   if(!text){ setStatus('請先輸入英文句子。'); return; }
@@ -58,7 +71,7 @@ speakBtn.addEventListener('click', () => {
   }else{
     utter.lang = 'en-US';
   }
-  utter.rate = (slowToggle && slowToggle.checked) ? 0.6 : 0.9;
+  utter.rate = isSlowPlayback ? 0.5 : 1.0;
   window.speechSynthesis.speak(utter);
   setStatus('正在播放標準發音。正式版會改用 Azure AI 語音。');
 });
@@ -183,6 +196,7 @@ analyzeBtn.addEventListener('click', () => {
     document.getElementById(`value-${id}`).innerHTML = `${metricScore} <small>/100</small>`;
   });
 
+  updateHistoryScore(sentence.value.trim(), score);
   setStatus('目前為模擬分析。正式版會把錄音送到 Azure Speech 做真正分析。');
 });
 
@@ -194,7 +208,7 @@ function saveHistory(text, audioBlob){
   const writeRecord = (audioDataUrl) => {
     const records = JSON.parse(localStorage.getItem('pronunciationHistory') || '[]');
     const filtered = records.filter(r => r.text !== text);
-    filtered.unshift({ text, audioUrl: audioDataUrl || '', createdAt: new Date().toLocaleString('zh-TW') });
+    filtered.unshift({ text, audioUrl: audioDataUrl || '', score: null, createdAt: new Date().toLocaleString('zh-TW') });
     const trimmed = filtered.slice(0, 5);
 
     try{
@@ -215,6 +229,17 @@ function saveHistory(text, audioBlob){
   reader.onloadend = () => writeRecord(reader.result);
   reader.onerror = () => writeRecord('');
   reader.readAsDataURL(audioBlob);
+}
+
+// 錄音跟分析是分開兩個步驟：錄完先存一筆沒有分數的紀錄，等按下「分析發音」算出分數後，
+// 再用句子文字找回剛剛那筆紀錄補上分數，這樣歷史紀錄才能顯示每句話的分析結果。
+function updateHistoryScore(text, score){
+  if(!text) return;
+  const records = JSON.parse(localStorage.getItem('pronunciationHistory') || '[]');
+  const idx = records.findIndex(r => r.text === text);
+  if(idx === -1) return;
+  records[idx].score = score;
+  try{ localStorage.setItem('pronunciationHistory', JSON.stringify(records)); }catch(e){ /* 容量不足就不補分數，不影響其他紀錄 */ }
 }
 
 // 給「我的帳戶」頁面顯示用的累計統計，跟 pronunicationHistory（只留最近 5 筆去重紀錄）分開記錄，
