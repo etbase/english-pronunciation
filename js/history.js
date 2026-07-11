@@ -31,6 +31,8 @@ function renderHistory(){
       </div>
     </div>
   `).join('');
+
+  historyList.querySelectorAll('audio').forEach(el => enhanceAudioPlayer(el));
 }
 
 renderHistory();

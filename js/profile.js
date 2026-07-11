@@ -95,8 +95,12 @@ function renderFolders(){
         <div class="folder-sentences">
           ${items.length ? items.map(s => `
             <div class="folder-sentence-row">
-              <span class="folder-sentence-text">${escapeHtmlLocal(s.text)}</span>
+              <div class="folder-sentence-top">
+                <span class="folder-sentence-text">${escapeHtmlLocal(s.text)}</span>
+                <span class="folder-sentence-date">${s.savedAt}</span>
+              </div>
               <div class="folder-sentence-actions">
+                <button type="button" class="small-btn" onclick="speakFromFolder('${encodeURIComponent(s.text)}')">聽標準發音</button>
                 <button type="button" class="small-btn btn-outline" onclick="rePracticeFromFolder('${encodeURIComponent(s.text)}')">重新練習</button>
                 <button type="button" class="small-btn btn-danger-outline" onclick="removeSavedSentence('${encodeURIComponent(s.text)}')">移除</button>
               </div>
@@ -126,13 +130,22 @@ function confirmRenameFolder(id){
 }
 
 function removeFolder(id){
-  if(!confirm('確定要刪除這個資料夾嗎？裡面的句子會移到預設資料夾。')) return;
+  if(!confirm('確定要刪除這個資料夾嗎？裡面收藏的句子也會一併刪除，無法復原。')) return;
   deleteFolder(id);
   renderFolders();
 }
 
 function rePracticeFromFolder(encodedText){
   location.href = `index.html?sentence=${encodedText}`;
+}
+
+function speakFromFolder(encodedText){
+  const text = decodeURIComponent(encodedText);
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = 0.9;
+  window.speechSynthesis.speak(utter);
 }
 
 function removeSavedSentence(encodedText){

@@ -14,6 +14,8 @@ const volumeMeter = document.getElementById('volumeMeter');
 const volumeFill = document.getElementById('volumeFill');
 const saveFolderBtn = document.getElementById('saveFolderBtn');
 
+enhanceAudioPlayer(audio, { autoShow: false });
+
 let mediaRecorder;
 let chunks = [];
 let currentBlobUrl = "";
@@ -159,7 +161,7 @@ recordBtn.addEventListener('click', async () => {
       const blob = new Blob(chunks,{type:actualType});
       currentBlobUrl = URL.createObjectURL(blob);
       audio.src = currentBlobUrl;
-      audio.style.display = 'block';
+      showAudioPlayer(audio);
 
       const ext = actualType.includes('mp4') ? 'm4a' : actualType.includes('ogg') ? 'ogg' : 'webm';
       downloadLink.href = currentBlobUrl;

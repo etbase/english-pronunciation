@@ -90,7 +90,18 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .btn-analyze:hover:not(:disabled){background:linear-gradient(135deg,#ffcf6e,#ffa920)}
 /* 瀏覽器在系統深色模式下，會把 audio 播放條原生控制項也畫成深色，這裡強制維持淺色，不隨系統深色模式變暗 */
 audio{color-scheme:light}
-.notice{border-radius:16px;background:var(--mint);padding:18px 20px;font-size:15px;color:#3d7863;font-weight:400;margin-bottom:20px}
+.audio-player{display:flex;align-items:center;gap:10px;width:100%;background:#fbfcfd;border:1px solid var(--line);border-radius:999px;padding:8px 14px;margin-bottom:12px}
+.audio-toggle{width:30px;height:30px;min-height:auto;flex-shrink:0;padding:0;border-radius:50%;border:0;background:var(--teal-dark);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.audio-icon-play{width:0;height:0;border-style:solid;border-width:6px 0 6px 9px;border-color:transparent transparent transparent white;margin-left:2px}
+.audio-toggle.playing .audio-icon-play{display:none}
+.audio-icon-pause{display:none;width:9px;height:10px;border-left:3px solid white;border-right:3px solid white}
+.audio-toggle.playing .audio-icon-pause{display:block}
+.audio-time{font-size:12px;color:var(--muted);font-family:"SF Mono","Menlo","Consolas",monospace;flex-shrink:0;min-width:32px}
+.audio-seek{flex:1;min-width:60px;height:6px;-webkit-appearance:none;appearance:none;background:#e8edf4;border-radius:999px;cursor:pointer;margin:0}
+.audio-seek::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--teal-dark);border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,.08);cursor:pointer}
+.audio-seek::-moz-range-track{height:6px;border-radius:999px;background:transparent}
+.audio-seek::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--teal-dark);border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,.08);cursor:pointer}
+.notice{border-radius:16px;background:var(--mint);padding:18px 20px;font-size:15px;color:var(--text);font-weight:400;margin-bottom:20px}
 a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration:none;width:fit-content}
 .mini-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .mini{min-height:150px;border:1px solid var(--line);border-radius:18px;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;padding:16px}
@@ -116,7 +127,7 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .download-link:hover{background:#dbe9fb}
 .download-link img{filter:var(--icon-tint)}
 .history-list{display:grid;gap:14px}.history-item{position:relative;border:1px solid var(--line);border-radius:18px;padding:18px;background:white;display:grid;gap:10px}.history-actions{display:flex;flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap}.small-btn{min-height:auto;border-radius:12px;padding:10px 12px;font-size:14px;background:#eef7ff;color:var(--text);display:inline-flex;flex-direction:row;flex-shrink:0}
-.history-actions audio{flex:1;min-width:160px;margin:0}
+.history-actions .audio-player{flex:1;min-width:160px;margin:0}
 .history-item-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .history-score{flex-shrink:0;padding:4px 12px;border-radius:999px;font-size:13px;font-weight:700;background:var(--mint);color:#0e8f6f;white-space:nowrap}
 .history-score-pending{background:#f1f3f6;color:var(--muted);font-weight:500}
@@ -161,9 +172,11 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .folder-rename-form{display:flex;gap:8px;flex:1;min-width:180px}
 .folder-rename-form input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:14px}
 .folder-sentences{display:grid;gap:10px;margin-top:14px}
-.folder-sentence-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid #f0f2f6;padding-top:10px}
-.folder-sentence-text{color:var(--text);font-size:14px;flex:1;min-width:180px}
-.folder-sentence-actions{display:flex;gap:8px;flex-shrink:0}
+.folder-sentence-row{border:1px solid #eef0f4;border-radius:14px;padding:14px 16px;display:grid;gap:10px;background:#fbfcfd}
+.folder-sentence-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.folder-sentence-text{color:var(--text);font-size:14px;font-weight:500;flex:1;min-width:160px}
+.folder-sentence-date{color:var(--muted);font-size:13px;flex-shrink:0}
+.folder-sentence-actions{display:flex;gap:8px;flex-wrap:wrap}
 .folder-empty{color:var(--muted);font-size:14px;margin:14px 0 0;font-weight:400}
 .faq{display:grid;gap:16px}.faq details{background:white;border:1px solid var(--line);border-radius:16px;padding:16px}.faq summary{font-weight:700;cursor:pointer}.faq p{color:var(--muted);line-height:1.7}
 footer{text-align:center;color:var(--muted);font-size:14px;font-weight:400;margin-top:24px}

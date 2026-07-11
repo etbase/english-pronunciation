@@ -39,13 +39,12 @@ function renameFolder(id, name){
   if(folder){ folder.name = name; saveFolders(folders); }
 }
 
-// 刪除資料夾時，裡面收藏的句子改放回預設資料夾，不會直接消失。
+// 刪除資料夾時，裡面收藏的句子會一併刪除，不會保留。
 function deleteFolder(id){
   if(id === DEFAULT_FOLDER_ID) return;
   const folders = getFolders().filter(f => f.id !== id);
   saveFolders(folders);
-  const saved = getSavedSentences();
-  saved.forEach(s => { if(s.folderId === id) s.folderId = DEFAULT_FOLDER_ID; });
+  const saved = getSavedSentences().filter(s => s.folderId !== id);
   saveSavedSentences(saved);
 }
 
