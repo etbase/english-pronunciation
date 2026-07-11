@@ -18,15 +18,17 @@ function renderHistory(){
         ${r.score != null ? `<span class="history-score">${r.score} 分</span>` : `<span class="history-score history-score-pending">尚未分析</span>`}
       </div>
       <span style="color:#63718a;font-size:14px">${r.createdAt}</span>
-      <div class="history-actions">
-        <button class="small-btn" onclick="speak('${encodeURIComponent(r.text)}')">聽標準發音</button>
-        <button class="small-btn btn-outline" onclick="rePractice(${index})">重新練習</button>
-        <button class="small-btn btn-danger-outline" onclick="deleteRecord(${index})">刪除</button>
-      </div>
-      ${r.audioUrl ? `<audio controls src="${r.audioUrl}"></audio>` : ''}
       <button type="button" class="history-folder-btn${isSentenceSaved(r.text) ? ' active' : ''}" aria-label="收藏到資料夾" aria-pressed="${isSentenceSaved(r.text)}" onclick="toggleHistoryFolder(this, ${index})">
         <img src="assets/icons/folder.svg" alt="">
       </button>
+      <div class="history-actions">
+        <button class="small-btn" onclick="speak('${encodeURIComponent(r.text)}')">聽標準發音</button>
+        ${r.audioUrl ? `<audio controls src="${r.audioUrl}"></audio>` : ''}
+        <button class="small-btn btn-outline" onclick="rePractice(${index})">重新練習</button>
+        <button type="button" class="history-delete-btn" aria-label="刪除紀錄" onclick="deleteRecord(${index})">
+          <img src="assets/icons/trash.svg" alt="">
+        </button>
+      </div>
     </div>
   `).join('');
 }

@@ -14,6 +14,7 @@ const folderList = document.getElementById('folderList');
 const newFolderInput = document.getElementById('newFolderInput');
 const newFolderBtn = document.getElementById('newFolderBtn');
 let renamingFolderId = null;
+const openFolderIds = new Set();
 
 function renderUser(user){
   profileName.textContent = user.name;
@@ -60,6 +61,8 @@ logoutBtn.addEventListener('click', () => {
 
 // 資料夾清單：每個資料夾顯示裡面收藏的句子，可以重新命名／刪除資料夾（預設資料夾不能刪），
 // 每句收藏可以直接「重新練習」帶回練習頁，或「移除」收藏。
+// 每個資料夾用 <details> 做成跟使用說明 QA 一樣可以收合的卡片，不會一次全部展開；
+// 用 openFolderIds 記住使用者展開過哪些資料夾，重新渲染（例如移除一句收藏）後不會又全部收合回去。
 function renderFolders(){
   const folders = getFolders();
   const saved = getSavedSentences();
@@ -67,26 +70,28 @@ function renderFolders(){
     const items = saved.filter(s => s.folderId === f.id);
     const isRenaming = f.id === renamingFolderId;
     return `
-      <div class="folder-card">
-        <div class="folder-card-header">
-          <img src="assets/icons/folder.svg" alt="">
-          ${isRenaming ? `
-            <div class="folder-rename-form">
-              <input type="text" id="renameFolderInput-${f.id}" value="${escapeHtmlLocal(f.name)}" maxlength="20">
-              <button type="button" class="small-btn btn-compact" onclick="confirmRenameFolder('${f.id}')">儲存</button>
-              <button type="button" class="small-btn btn-outline btn-compact" onclick="cancelRenameFolder()">取消</button>
-            </div>
-          ` : `
-            <strong>${escapeHtmlLocal(f.name)}</strong>
-            <span class="folder-count">${items.length} 句</span>
-            ${f.id !== DEFAULT_FOLDER_ID ? `
-              <div class="folder-card-actions">
-                <button type="button" class="small-btn btn-outline" onclick="startRenameFolder('${f.id}')">重新命名</button>
-                <button type="button" class="small-btn btn-danger-outline" onclick="removeFolder('${f.id}')">刪除資料夾</button>
+      <details class="folder-card" data-folder-id="${f.id}"${openFolderIds.has(f.id) ? ' open' : ''}>
+        <summary>
+          <div class="folder-card-header">
+            <img src="assets/icons/folder.svg" alt="">
+            ${isRenaming ? `
+              <div class="folder-rename-form" onclick="event.stopPropagation()">
+                <input type="text" id="renameFolderInput-${f.id}" value="${escapeHtmlLocal(f.name)}" maxlength="20">
+                <button type="button" class="small-btn btn-compact" onclick="confirmRenameFolder('${f.id}')">儲存</button>
+                <button type="button" class="small-btn btn-outline btn-compact" onclick="cancelRenameFolder()">取消</button>
               </div>
-            ` : ''}
-          `}
-        </div>
+            ` : `
+              <strong>${escapeHtmlLocal(f.name)}</strong>
+              <span class="folder-count">${items.length} 句</span>
+              ${f.id !== DEFAULT_FOLDER_ID ? `
+                <div class="folder-card-actions" onclick="event.stopPropagation()">
+                  <button type="button" class="small-btn btn-outline" onclick="startRenameFolder('${f.id}')">重新命名</button>
+                  <button type="button" class="small-btn btn-danger-outline" onclick="removeFolder('${f.id}')">刪除資料夾</button>
+                </div>
+              ` : ''}
+            `}
+          </div>
+        </summary>
         <div class="folder-sentences">
           ${items.length ? items.map(s => `
             <div class="folder-sentence-row">
@@ -98,9 +103,16 @@ function renderFolders(){
             </div>
           `).join('') : '<p class="folder-empty">這個資料夾還沒有收藏的句子。</p>'}
         </div>
-      </div>
+      </details>
     `;
   }).join('');
+
+  folderList.querySelectorAll('details.folder-card').forEach(d => {
+    d.addEventListener('toggle', () => {
+      if(d.open) openFolderIds.add(d.dataset.folderId);
+      else openFolderIds.delete(d.dataset.folderId);
+    });
+  });
 }
 
 function startRenameFolder(id){ renamingFolderId = id; renderFolders(); }

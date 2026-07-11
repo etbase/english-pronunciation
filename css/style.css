@@ -7,6 +7,7 @@
   /* 統一的圖示上色濾鏡：把原本純黑色的 svg 圖示，轉成跟文字一致的深灰藍／品牌青綠色 */
   --icon-tint:invert(26%) sepia(21%) saturate(389%) hue-rotate(178deg) brightness(130%) contrast(135%);
   --teal-icon-tint:invert(40%) sepia(90%) saturate(865%) hue-rotate(142deg) brightness(89%) contrast(103%);
+  --danger-icon-tint:invert(31%) sepia(46%) saturate(1221%) hue-rotate(311deg) brightness(95%) contrast(86%);
   --shadow:0 18px 42px rgba(40,64,108,.10); --radius:24px;
 }
 *{box-sizing:border-box}
@@ -57,8 +58,9 @@ textarea{width:100%;height:178px;resize:none;border:1.8px solid rgba(11,184,174,
 .slow-toggle.active{background:#eef1f5;border-color:#eef1f5}
 .folder-save-btn{width:40px;height:40px;min-height:auto;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1.5px solid var(--line);background:white;cursor:pointer;transition:background .15s,border-color .15s}
 .folder-save-btn:hover{background:#f3f7f8;border-color:rgba(11,184,174,.55)}
-.folder-save-btn img{width:19px;height:19px;filter:var(--teal-icon-tint)}
+.folder-save-btn img{width:19px;height:19px;filter:var(--icon-tint);transition:filter .15s}
 .folder-save-btn.active{background:#eef1f5;border-color:#eef1f5}
+.folder-save-btn.active img{filter:var(--teal-icon-tint)}
 .folder-popover{position:absolute;z-index:50;width:240px;background:white;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px}
 .folder-popover-title{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px}
 .folder-popover-list{display:grid;gap:6px;max-height:180px;overflow-y:auto}
@@ -113,15 +115,19 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .download-link{background:#eef7ff;color:var(--text)}
 .download-link:hover{background:#dbe9fb}
 .download-link img{filter:var(--icon-tint)}
-.history-list{display:grid;gap:14px}.history-item{position:relative;border:1px solid var(--line);border-radius:18px;padding:18px;padding-bottom:56px;background:white;display:grid;gap:10px}.history-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.small-btn{min-height:auto;border-radius:12px;padding:10px 12px;font-size:14px;background:#eef7ff;color:var(--text);display:inline-flex;flex-direction:row}
-.history-item audio{width:100%;margin-top:4px}
+.history-list{display:grid;gap:14px}.history-item{position:relative;border:1px solid var(--line);border-radius:18px;padding:18px;background:white;display:grid;gap:10px}.history-actions{display:flex;flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap}.small-btn{min-height:auto;border-radius:12px;padding:10px 12px;font-size:14px;background:#eef7ff;color:var(--text);display:inline-flex;flex-direction:row;flex-shrink:0}
+.history-actions audio{flex:1;min-width:160px;margin:0}
 .history-item-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .history-score{flex-shrink:0;padding:4px 12px;border-radius:999px;font-size:13px;font-weight:700;background:var(--mint);color:#0e8f6f;white-space:nowrap}
 .history-score-pending{background:#f1f3f6;color:var(--muted);font-weight:500}
-.history-folder-btn{position:absolute;right:18px;bottom:14px;width:34px;height:34px;min-height:auto;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1.5px solid var(--line);background:white;cursor:pointer}
+.history-folder-btn{position:absolute;right:18px;top:48px;width:32px;height:32px;min-height:auto;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1.5px solid var(--line);background:white;cursor:pointer}
 .history-folder-btn:hover{background:#f3f7f8;border-color:rgba(11,184,174,.55)}
-.history-folder-btn img{width:16px;height:16px;filter:var(--icon-tint)}
+.history-folder-btn img{width:15px;height:15px;filter:var(--icon-tint);transition:filter .15s}
 .history-folder-btn.active{background:#eef1f5;border-color:#eef1f5}
+.history-folder-btn.active img{filter:var(--teal-icon-tint)}
+.history-delete-btn{margin-left:auto;flex-shrink:0;width:34px;height:34px;min-height:auto;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1.5px solid #f3d4d4;background:white;cursor:pointer}
+.history-delete-btn:hover{background:#fce3e3}
+.history-delete-btn img{width:16px;height:16px;filter:var(--danger-icon-tint)}
 .small-btn:hover{background:#dbe9fb}
 .btn-outline{background:white;color:var(--muted);border:1px solid var(--line)}
 .btn-danger-outline{background:white;color:#c23b3b;border:1px solid #f3d4d4}
@@ -145,7 +151,9 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .folder-create-row .input{flex:1}
 .folder-list{display:grid;gap:14px}
 .folder-card{border:1px solid var(--line);border-radius:18px;background:white;padding:16px 18px}
-.folder-card-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.folder-card summary{cursor:pointer}
+.folder-card summary::marker{color:var(--muted)}
+.folder-card-header{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;width:calc(100% - 20px);vertical-align:middle}
 .folder-card-header img{width:18px;height:18px;filter:var(--icon-tint)}
 .folder-card-header strong{font-size:16px;color:var(--text)}
 .folder-count{font-size:13px;color:var(--muted);font-weight:400}
