@@ -9,8 +9,6 @@ const statusEl = document.getElementById('status');
 const audio = document.getElementById('audio');
 const downloadLink = document.getElementById('downloadLink');
 const slowToggle = document.getElementById('slowToggle');
-const sentenceBankSelect = document.getElementById('sentenceBank');
-const randomSentenceBtn = document.getElementById('randomSentenceBtn');
 const volumeMeter = document.getElementById('volumeMeter');
 const volumeFill = document.getElementById('volumeFill');
 
@@ -29,58 +27,6 @@ if(prefillSentence){
   sentence.value = prefillSentence;
   updateCounter();
   history.replaceState(null, '', location.pathname);
-}
-
-// 內建例句：分類放在下拉選單裡，也給「隨機一句」按鈕共用同一份清單。
-const sentenceBank = {
-  '日常生活': [
-    'I would like a cup of coffee and a bottle of water.',
-    'Could you please repeat that?',
-    'Thank you very much for your help.',
-    'The weather is beautiful today.'
-  ],
-  '旅遊': [
-    'Can you tell me how to get to the station?',
-    'Where is the nearest restroom?',
-    'I need to check in for my flight.',
-    'How much does this cost?'
-  ],
-  '職場': [
-    "I'm looking forward to seeing you soon.",
-    'What time does the meeting start?',
-    "Could you send me the report by tomorrow?",
-    'I appreciate your feedback on this project.'
-  ]
-};
-
-if(sentenceBankSelect){
-  Object.entries(sentenceBank).forEach(([category, sentences]) => {
-    const group = document.createElement('optgroup');
-    group.label = category;
-    sentences.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s;
-      opt.textContent = s;
-      group.appendChild(opt);
-    });
-    sentenceBankSelect.appendChild(group);
-  });
-  sentenceBankSelect.addEventListener('change', () => {
-    if(sentenceBankSelect.value){
-      sentence.value = sentenceBankSelect.value;
-      updateCounter();
-      sentenceBankSelect.value = '';
-    }
-  });
-}
-
-if(randomSentenceBtn){
-  const allSentences = Object.values(sentenceBank).flat();
-  randomSentenceBtn.addEventListener('click', () => {
-    const pick = allSentences[Math.floor(Math.random() * allSentences.length)];
-    sentence.value = pick;
-    updateCounter();
-  });
 }
 
 // 瀏覽器內建語音（Web Speech API）免費但每個作業系統提供的語音不同，

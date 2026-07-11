@@ -31,16 +31,10 @@
 <div class="grid">
 <section class="card">
   <div class="section-title"><span class="num">1</span>輸入你想練習的英文句子</div>
-  <div class="sentence-bank-row">
-    <select id="sentenceBank" class="sentence-select">
-      <option value="">📚 選一句內建例句...</option>
-    </select>
-    <button type="button" id="randomSentenceBtn" class="small-btn btn-outline">🎲 隨機一句</button>
-  </div>
   <textarea id="sentence" maxlength="200">I would like a cup of coffee
 and a bottle of water.</textarea>
   <div class="counter" id="counter">50 / 200</div>
-  <label class="slow-toggle"><input type="checkbox" id="slowToggle"> 🐢 慢速播放標準發音</label>
+  <label class="slow-toggle"><input type="checkbox" id="slowToggle"><img src="assets/icons/turtle.svg" alt="">慢速播放標準發音</label>
   <div class="button-row">
     <button class="btn-listen" id="speakBtn"><img src="assets/icons/speaker.svg" alt="">播放發音</button>
     <button class="btn-record" id="recordBtn"><img src="assets/icons/microphone.svg" alt="">開始錄音</button>
@@ -49,7 +43,7 @@ and a bottle of water.</textarea>
   </div>
 
   <div class="volume-meter" id="volumeMeter" style="display:none">
-    <span class="volume-label">🎙️ 音量</span>
+    <span class="volume-label"><img src="assets/icons/microphone.svg" alt="">音量</span>
     <div class="volume-bar"><div class="volume-fill" id="volumeFill"></div></div>
   </div>
 

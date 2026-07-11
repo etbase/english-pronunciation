@@ -46,12 +46,12 @@ textarea{width:100%;height:178px;resize:none;border:1.8px solid rgba(11,184,174,
 .counter{text-align:right;color:#627089;font-size:14px;font-weight:400;margin-top:-34px;margin-right:18px;position:relative;z-index:1}
 .hint{margin:26px 0 22px;color:#526176;font-size:15px;font-weight:400}
 .hint-icon{display:flex;align-items:center;gap:8px}.hint-icon img{width:16px;height:16px}
-.sentence-bank-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.sentence-select{flex:1;min-width:160px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;color:#34435b;background:white;cursor:pointer}
 .slow-toggle{display:flex;align-items:center;gap:6px;font-size:14px;color:#526176;margin-top:10px;cursor:pointer;user-select:none}
 .slow-toggle input{cursor:pointer}
+.slow-toggle img{width:16px;height:16px;filter:invert(40%) sepia(90%) saturate(865%) hue-rotate(142deg) brightness(89%) contrast(103%)}
 .volume-meter{display:flex;align-items:center;gap:10px;margin-top:18px;margin-bottom:4px}
-.volume-label{font-size:13px;color:#526176;white-space:nowrap}
+.volume-label{display:flex;align-items:center;gap:6px;font-size:13px;color:#526176;white-space:nowrap}
+.volume-label img{width:15px;height:15px;filter:invert(40%) sepia(90%) saturate(865%) hue-rotate(142deg) brightness(89%) contrast(103%)}
 .volume-bar{flex:1;height:8px;border-radius:999px;background:#e9f2f3;overflow:hidden}
 .volume-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#10b7ad,#ffb020);transition:width .05s linear}
 .button-row{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:26px;margin-bottom:24px}
@@ -112,6 +112,15 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .plan-badge{background:#eef7ff;color:#0b2b55;border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700}
 .faq{display:grid;gap:16px}.faq details{background:white;border:1px solid var(--line);border-radius:16px;padding:16px}.faq summary{font-weight:700;cursor:pointer}.faq p{color:#526176;line-height:1.7}
 footer{text-align:center;color:#626f83;font-size:14px;font-weight:400;margin-top:24px}
+/* 側邊欄還在、但視窗沒那麼寬時（例如筆電視窗沒開滿），避免文字被固定寬度的欄位擠到重疊、擠成一字一行 */
+@media(min-width:1101px) and (max-width:1380px){
+  .button-row{gap:12px}
+  .button-row button{font-size:14px}
+  .result-top{grid-template-columns:150px 1fr;gap:18px}
+  .character-box,.character-missing{display:none}
+  .score-ring{width:150px;height:150px}
+  .score-ring:before{width:112px;height:112px}
+}
 @media(max-width:1100px){
   main{margin-left:0;padding:24px 18px calc(88px + env(safe-area-inset-bottom))}
   .sidebar{display:none}
