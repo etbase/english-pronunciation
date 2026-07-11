@@ -38,7 +38,7 @@
 english-pronunciation/
 ├── index.html          # 練習頁：輸入句子、聽發音、錄音、分析結果
 ├── login.html           # 登入頁
-├── profile.html          # 我的帳戶頁：顯示登入資訊、編輯名字、練習統計、登出
+├── profile.html          # 我的帳戶頁：顯示登入資訊、編輯名字、資料夾收藏、登出
 ├── history.html         # 歷史紀錄頁
 ├── help.html            # 使用說明 / FAQ
 ├── css/
@@ -54,9 +54,24 @@ english-pronunciation/
 ├── assets/
 │   ├── characters/       # 角色情緒圖（預設／開心／生氣）
 │   └── icons/            # 介面圖示 (SVG)
+├── firebase/
+│   ├── firestore.rules   # Firestore 安全規則範本（Phase 1 導入時使用，目前尚未連接 Firebase）
+│   └── storage.rules     # Storage 安全規則範本（存錄音檔時使用）
+├── .githooks/            # 本機 git 安全防護（commit／push 前自動掃描機密內容，見 SECURITY.md）
+├── SECURITY.md           # 安全性說明：什麼能進 git、金鑼管理原則、上線前檢查清單
 ├── .env.example          # 未來各階段所需環境變數範例
 └── .gitignore
 ```
+
+## 安全性
+
+專案有設定本機的 git hooks（`.githooks/`），`commit`／`push` 前會自動掃描是否有機密金鑼或不該進版本控制的檔案（如 `.env`、Service Account JSON），偵測到會直接擋下來。新 clone 一份 repo 到別的電腦時，記得先執行一次：
+
+```bash
+git config core.hooksPath .githooks
+```
+
+完整說明（什麼能進 git、Firebase 安全規則、語音 API 金鑼管理原則、上線前檢查清單）見 [SECURITY.md](./SECURITY.md)。
 
 ## 本機預覽
 

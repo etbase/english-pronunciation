@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# 安全掃描（commit 前）：擋掉常見的機密檔案與疑似金鑼內容，避免不小心把機密 commit 進 git 歷史。
+# 這是輔助防呆機制，不是絕對保證；真正的機密永遠都應該走 .env（已被 .gitignore 排除），不要寫進程式碼裡。
+#
+# 如果確定是誤判（例如程式碼裡剛好出現長得很像金鑼格式的字串），
+# 可以用 `git commit --no-verify` 強制跳過這次檢查，但請先確認真的沒有洩漏機密。
+
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+# 檔名黑名單：這些檔案一律不該進 git，不管內容是什麼（.env.example 是唯一允許的例外）
+BLOCKED_NAME_PATTERN='(^|/)(\.env|\.env\.[a-zA-Z0-9]*\.?local|serviceAccountKey.*\.json|firebase-adminsdk.*\.json|.*\.pem|.*\.p12|.*\.key)$'
+
+# 內容黑名單：常見的機密金鑼格式
+CONTENT_PATTERNS=(
+  'AIza[0-9A-Za-z_-]{35,}'
+  'AKIA[0-9A-Z]{16,}'
+  'sk_live_[0-9A-Za-z]{20,}'
+  'sk_test_[0-9A-Za-z]{20,}'
+  '\-\-\-\-\-BEGIN (RSA |EC )?PRIVATE KEY\-\-\-\-\-'
+  '"private_key": *"-----BEGIN'
+)
+
+TMP_FLAG=$(mktemp)
+trap 'rm -f "$TMP_FLAG"' EXIT
+
+git diff --cached --name-only --diff-filter=ACM | while IFS= read -r file; do
+  if [ "$file" = ".env.example" ]; then
+    continue
+  fi
+
+  if echo "$file" | grep -Eq "$BLOCKED_NAME_PATTERN"; then
+    echo -e "${RED}✗ 擋下 commit：${file} 屬於機密設定檔，不該進版本控制（已列在 .gitignore 名單內）。${NC}"
+    echo "x" >> "$TMP_FLAG"
+    continue
+  fi
+
+  case "$file" in
+    *.png|*.jpg|*.jpeg|*.gif|*.svg|*.ico|*.woff|*.woff2|*.ttf|*.eot) continue ;;
+  esac
+  [ -f "$file" ] || continue
+
+  for pattern in "${CONTENT_PATTERNS[@]}"; do
+    if git diff --cached -U0 -- "$file" | grep -Eq "$pattern"; then
+      echo -e "${RED}✗ 擋下 commit：${file} 裡疑似含有機密金鑼（符合格式：${pattern}）。${NC}"
+      echo "x" >> "$TMP_FLAG"
+    fi
+  done
+done
+
+if [ -s "$TMP_FLAG" ]; then
+  echo -e "${YELLOW}如果確定不是機密（誤判），可用 git commit --no-verify 強制跳過。${NC}"
+  exit 1
+fi
+
+exit 0

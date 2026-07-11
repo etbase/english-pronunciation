@@ -1,0 +1,23 @@
+// Firebase Storage 安全規則範本 —— 之後要把錄音音檔存到雲端時使用（目前音檔還是存在
+// localStorage 的 Base64，尚未接 Storage，避免要求先綁定 Blaze 付費方案）。
+//
+// 核心原則跟 firestore.rules 一樣：音檔依使用者 uid 分資料夾存放，只有本人能讀寫自己的音檔，
+// 並限制檔案大小跟檔案類型，避免被亂上傳大檔案或非音檔濫用容量。
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /recordings/{userId}/{fileName} {
+      allow read, write: if request.auth != null
+                          && request.auth.uid == userId
+                          && request.resource.size < 10 * 1024 * 1024
+                          && request.resource.contentType.matches('audio/.*');
+    }
+
+    // 預設全部拒絕
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

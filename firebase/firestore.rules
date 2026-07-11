@@ -1,0 +1,26 @@
+// Firestore 安全規則範本 —— 第一階段導入 Firebase 登入／資料儲存時使用。
+// 目前專案還沒有實際連接 Firebase，這份規則是先寫好備用，正式導入時直接部署即可。
+//
+// 核心原則：每個使用者只能讀寫「自己名下」的資料，其他人的資料一律不能碰，
+// 沒有明確允許的路徑，預設全部拒絕（避免漏設規則的路徑變成公開讀寫）。
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 使用者基本資料（暱稱、頭像等）：只有本人（uid 對得上）能讀寫
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // 使用者名下的子集合（練習紀錄、資料夾、收藏句子等），一樣只限本人存取
+      match /{subcollection}/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // 預設全部拒絕：任何沒有在上面明確開放的路徑，都不能讀寫
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
