@@ -11,6 +11,10 @@
   --shadow:0 18px 42px rgba(40,64,108,.10); --radius:24px;
 }
 *{box-sizing:border-box}
+/* 明確宣告網站只支援淺色主題：部分手機瀏覽器會在系統深色模式下，自動幫沒宣告 color-scheme 的網站
+   套用「強制深色」加工（連 SVG 圖示的顏色也會被重新調整），導致同一個圖示在手機、電腦看起來色調不同。
+   宣告這個之後，瀏覽器就不會再自動加工顏色，圖示在哪裡看都會是同一個顏色。 */
+html{color-scheme:light}
 body{margin:0;font-family:"Noto Sans TC",-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;color:var(--text);background:radial-gradient(circle at 20% 4%,rgba(210,230,255,.7),transparent 30%),radial-gradient(circle at 86% 100%,rgba(215,235,250,.5),transparent 30%),var(--bg);min-height:100vh}
 /* 純英文文字：不套用中文字體與字重調整，維持原始系統字型外觀 */
 .title h1,.title h2,.subtitle,.overall-title,.overall-good,.metric-name small{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -21,10 +25,13 @@ body{margin:0;font-family:"Noto Sans TC",-apple-system,BlinkMacSystemFont,"Segoe
 .account-icon img{width:52px;height:52px;filter:brightness(0) invert(1)}
 .account-icon-initial{color:white;font-size:32px;font-weight:900;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .bottom-nav{display:none;position:fixed;left:0;right:0;bottom:0;background:#ffffff;border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:20;box-shadow:0 -10px 24px rgba(8,37,74,.08)}
-.bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:1;padding:8px 2px;color:var(--muted);text-decoration:none;font-size:11px;font-weight:400;border-radius:14px}
+.bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:1;padding:8px 2px;color:var(--muted);text-decoration:none;font-size:11px;font-weight:400;border-radius:14px;-webkit-tap-highlight-color:transparent}
 .bottom-nav-icon{width:26px;height:26px;display:grid;place-items:center;border-radius:10px}
 .bottom-nav-icon img{width:22px;height:22px;filter:var(--icon-tint)}
 .bottom-nav a.active{background:#eef1f5}
+/* 手機瀏覽器內建的點擊反饋（tap highlight）預設只會先貼著 icon 那個小方塊短暫閃一下，
+   看起來像是「先閃小色塊、才長成整條區塊」，改成按下去立刻讓整條區塊變灰，體感更即時。 */
+.bottom-nav a:active{background:#eef1f5}
 .bottom-nav-account .bottom-nav-icon{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--lake),var(--lake-dark))}
 .bottom-nav-account .bottom-nav-icon img{width:22px;height:22px;filter:brightness(0) invert(1)}
 .bottom-nav-account .bottom-nav-icon .account-icon-initial{font-size:16px}
