@@ -178,7 +178,7 @@ const metricIds = ['accuracy','stress','rhythm','connected','elision','fluency']
 analyzeBtn.addEventListener('click', () => {
   const score = Math.floor(Math.random() * 41) + 50; // 50-90 demo
   document.getElementById('overall').textContent = score;
-  document.getElementById('scoreRing').style.background = `conic-gradient(var(--teal) 0 ${score}%, #dff4f2 ${score}% 100%)`;
+  document.getElementById('scoreRing').style.background = `conic-gradient(var(--teal) 0 ${score}%, #ecf8f7 ${score}% 100%)`;
 
   const img = document.getElementById('characterImage');
   if(img){
