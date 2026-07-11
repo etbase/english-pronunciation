@@ -12,6 +12,7 @@ const slowToggle = document.getElementById('slowToggle');
 const slowToggleRate = document.getElementById('slowToggleRate');
 const volumeMeter = document.getElementById('volumeMeter');
 const volumeFill = document.getElementById('volumeFill');
+const saveFolderBtn = document.getElementById('saveFolderBtn');
 
 let mediaRecorder;
 let chunks = [];
@@ -28,6 +29,24 @@ if(prefillSentence){
   sentence.value = prefillSentence;
   updateCounter();
   history.replaceState(null, '', location.pathname);
+}
+
+// 資料夾收藏：圖示按下去會跳出小面板選資料夾，收藏後圖示會維持「按下去」的樣式，
+// 换句話或編輯句子後，圖示狀態也要跟著更新成目前這句話有沒有被收藏過。
+function refreshSaveFolderBtnState(){
+  if(!saveFolderBtn) return;
+  const saved = typeof isSentenceSaved === 'function' && isSentenceSaved(sentence.value.trim());
+  saveFolderBtn.classList.toggle('active', !!saved);
+  saveFolderBtn.setAttribute('aria-pressed', String(!!saved));
+}
+if(saveFolderBtn){
+  saveFolderBtn.addEventListener('click', () => {
+    const text = sentence.value.trim();
+    if(!text){ setStatus('請先輸入句子，才能收藏到資料夾。'); return; }
+    openFolderPopover(saveFolderBtn, text, refreshSaveFolderBtnState);
+  });
+  sentence.addEventListener('input', refreshSaveFolderBtnState);
+  refreshSaveFolderBtnState();
 }
 
 // 瀏覽器內建語音（Web Speech API）免費但每個作業系統提供的語音不同，
@@ -209,7 +228,7 @@ function saveHistory(text, audioBlob){
     const records = JSON.parse(localStorage.getItem('pronunciationHistory') || '[]');
     const filtered = records.filter(r => r.text !== text);
     filtered.unshift({ text, audioUrl: audioDataUrl || '', score: null, createdAt: new Date().toLocaleString('zh-TW') });
-    const trimmed = filtered.slice(0, 5);
+    const trimmed = filtered.slice(0, 10);
 
     try{
       localStorage.setItem('pronunciationHistory', JSON.stringify(trimmed));
@@ -242,8 +261,8 @@ function updateHistoryScore(text, score){
   try{ localStorage.setItem('pronunciationHistory', JSON.stringify(records)); }catch(e){ /* 容量不足就不補分數，不影響其他紀錄 */ }
 }
 
-// 給「我的帳戶」頁面顯示用的累計統計，跟 pronunicationHistory（只留最近 5 筆去重紀錄）分開記錄，
-// 這樣才能顯示「總練習次數」等不會因為去重或超過 5 筆而被蓋掉的數字。
+// 累計練習次數統計，跟 pronunciationHistory（只留最近 10 筆去重紀錄）分開記錄，
+// 這樣不會因為去重或超過 10 筆而被蓋掉。
 function updatePracticeStats(){
   const stats = JSON.parse(localStorage.getItem('pronunciationStats') || '{}');
   stats.totalRecordings = (stats.totalRecordings || 0) + 1;

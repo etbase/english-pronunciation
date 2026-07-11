@@ -10,9 +10,10 @@ const nameInput = document.getElementById('nameInput');
 const saveNameBtn = document.getElementById('saveNameBtn');
 const cancelNameBtn = document.getElementById('cancelNameBtn');
 const logoutBtn = document.getElementById('logoutBtn');
-const statTotal = document.getElementById('statTotal');
-const statLast = document.getElementById('statLast');
-const statSentences = document.getElementById('statSentences');
+const folderList = document.getElementById('folderList');
+const newFolderInput = document.getElementById('newFolderInput');
+const newFolderBtn = document.getElementById('newFolderBtn');
+let renamingFolderId = null;
 
 function renderUser(user){
   profileName.textContent = user.name;
@@ -22,21 +23,12 @@ function renderUser(user){
   profileJoined.textContent = user.loginAt || '--';
 }
 
-function renderStats(){
-  const stats = JSON.parse(localStorage.getItem('pronunciationStats') || 'null');
-  statTotal.textContent = stats && stats.totalRecordings ? stats.totalRecordings : 0;
-  statLast.textContent = stats && stats.lastRecordedAt ? stats.lastRecordedAt : '--';
-
-  const history = JSON.parse(localStorage.getItem('pronunciationHistory') || '[]');
-  statSentences.textContent = history.length;
-}
-
 const user = JSON.parse(localStorage.getItem('pronunciationUser') || 'null');
 if(!user){
   location.href = 'login.html';
 }else{
   renderUser(user);
-  renderStats();
+  renderFolders();
 }
 
 editNameBtn.addEventListener('click', () => {
@@ -64,4 +56,85 @@ saveNameBtn.addEventListener('click', () => {
 logoutBtn.addEventListener('click', () => {
   localStorage.removeItem('pronunciationUser');
   location.href = 'login.html';
+});
+
+// 資料夾清單：每個資料夾顯示裡面收藏的句子，可以重新命名／刪除資料夾（預設資料夾不能刪），
+// 每句收藏可以直接「重新練習」帶回練習頁，或「移除」收藏。
+function renderFolders(){
+  const folders = getFolders();
+  const saved = getSavedSentences();
+  folderList.innerHTML = folders.map(f => {
+    const items = saved.filter(s => s.folderId === f.id);
+    const isRenaming = f.id === renamingFolderId;
+    return `
+      <div class="folder-card">
+        <div class="folder-card-header">
+          <img src="assets/icons/folder.svg" alt="">
+          ${isRenaming ? `
+            <div class="folder-rename-form">
+              <input type="text" id="renameFolderInput-${f.id}" value="${escapeHtmlLocal(f.name)}" maxlength="20">
+              <button type="button" class="small-btn btn-compact" onclick="confirmRenameFolder('${f.id}')">儲存</button>
+              <button type="button" class="small-btn btn-outline btn-compact" onclick="cancelRenameFolder()">取消</button>
+            </div>
+          ` : `
+            <strong>${escapeHtmlLocal(f.name)}</strong>
+            <span class="folder-count">${items.length} 句</span>
+            ${f.id !== DEFAULT_FOLDER_ID ? `
+              <div class="folder-card-actions">
+                <button type="button" class="small-btn btn-outline" onclick="startRenameFolder('${f.id}')">重新命名</button>
+                <button type="button" class="small-btn btn-danger-outline" onclick="removeFolder('${f.id}')">刪除資料夾</button>
+              </div>
+            ` : ''}
+          `}
+        </div>
+        <div class="folder-sentences">
+          ${items.length ? items.map(s => `
+            <div class="folder-sentence-row">
+              <span class="folder-sentence-text">${escapeHtmlLocal(s.text)}</span>
+              <div class="folder-sentence-actions">
+                <button type="button" class="small-btn btn-outline" onclick="rePracticeFromFolder('${encodeURIComponent(s.text)}')">重新練習</button>
+                <button type="button" class="small-btn btn-danger-outline" onclick="removeSavedSentence('${encodeURIComponent(s.text)}')">移除</button>
+              </div>
+            </div>
+          `).join('') : '<p class="folder-empty">這個資料夾還沒有收藏的句子。</p>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function startRenameFolder(id){ renamingFolderId = id; renderFolders(); }
+function cancelRenameFolder(){ renamingFolderId = null; renderFolders(); }
+function confirmRenameFolder(id){
+  const input = document.getElementById('renameFolderInput-' + id);
+  const name = input ? input.value.trim() : '';
+  if(name) renameFolder(id, name);
+  renamingFolderId = null;
+  renderFolders();
+}
+
+function removeFolder(id){
+  if(!confirm('確定要刪除這個資料夾嗎？裡面的句子會移到預設資料夾。')) return;
+  deleteFolder(id);
+  renderFolders();
+}
+
+function rePracticeFromFolder(encodedText){
+  location.href = `index.html?sentence=${encodedText}`;
+}
+
+function removeSavedSentence(encodedText){
+  unsaveSentence(decodeURIComponent(encodedText));
+  renderFolders();
+}
+
+newFolderBtn.addEventListener('click', () => {
+  const name = newFolderInput.value.trim();
+  if(!name) return;
+  createFolder(name);
+  newFolderInput.value = '';
+  renderFolders();
+});
+newFolderInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter') newFolderBtn.click();
 });

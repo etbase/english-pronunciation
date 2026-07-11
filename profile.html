@@ -57,15 +57,16 @@
     <div class="profile-row"><span>加入時間</span><span id="profileJoined">--</span></div>
   </div>
 
-  <p class="hint hint-icon" style="margin-top:28px"><img src="assets/icons/analysis.svg" alt="">練習統計</p>
-  <div class="mini-cards">
-    <div class="mini"><img src="assets/icons/microphone.svg" alt=""><strong id="statTotal">0</strong><span>總練習次數</span></div>
-    <div class="mini"><img src="assets/icons/history.svg" alt=""><strong id="statLast">--</strong><span>最近練習時間</span></div>
-    <div class="mini"><img src="assets/icons/analysis.svg" alt=""><strong id="statSentences">0</strong><span>練習過的句子數</span></div>
+  <p class="hint hint-icon" style="margin-top:28px"><img src="assets/icons/folder.svg" alt="">資料夾</p>
+  <div class="folder-create-row">
+    <input type="text" id="newFolderInput" class="input" placeholder="新增資料夾名稱" maxlength="20">
+    <button type="button" id="newFolderBtn" class="primary-btn btn-compact">新增資料夾</button>
   </div>
+  <div class="folder-list" id="folderList"></div>
 
   <button class="primary-btn btn-danger-outline btn-compact" id="logoutBtn" style="margin-top:28px">登出</button>
 </section>
+<script src="js/folders.js"></script>
 <script src="js/profile.js"></script>
 </main>
 <nav class="bottom-nav">

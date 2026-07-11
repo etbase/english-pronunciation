@@ -22,8 +22,11 @@ function renderHistory(){
         <button class="small-btn" onclick="speak('${encodeURIComponent(r.text)}')">聽標準發音</button>
         <button class="small-btn btn-outline" onclick="rePractice(${index})">重新練習</button>
         <button class="small-btn btn-danger-outline" onclick="deleteRecord(${index})">刪除</button>
-        ${r.audioUrl ? `<audio controls src="${r.audioUrl}"></audio>` : ''}
       </div>
+      ${r.audioUrl ? `<audio controls src="${r.audioUrl}"></audio>` : ''}
+      <button type="button" class="history-folder-btn${isSentenceSaved(r.text) ? ' active' : ''}" aria-label="收藏到資料夾" aria-pressed="${isSentenceSaved(r.text)}" onclick="toggleHistoryFolder(this, ${index})">
+        <img src="assets/icons/folder.svg" alt="">
+      </button>
     </div>
   `).join('');
 }
@@ -45,6 +48,14 @@ function rePractice(index){
   const record = records[index];
   if(!record) return;
   location.href = `index.html?sentence=${encodeURIComponent(record.text)}`;
+}
+
+// 點歷史紀錄卡片右下角的資料夾圖示，跳出跟練習頁一樣的收藏小面板。
+function toggleHistoryFolder(anchorEl, index){
+  const records = getRecords();
+  const record = records[index];
+  if(!record) return;
+  openFolderPopover(anchorEl, record.text, renderHistory);
 }
 
 function deleteRecord(index){
