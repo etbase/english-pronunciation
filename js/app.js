@@ -70,15 +70,18 @@ let selectedVoice = 'en-US-AvaNeural';
 let selectedVoiceLabel = 'Ava';
 const voiceRow = document.getElementById('voiceRow');
 if(voiceRow){
-  voiceRow.addEventListener('click', (event) => {
-    const btn = event.target.closest('.voice-btn');
-    if(!btn || !voiceRow.contains(btn)) return;
-    selectedVoice = btn.getAttribute('data-voice') || 'en-US-AvaNeural';
-    selectedVoiceLabel = btn.getAttribute('data-voice-label') || 'Ava';
-    voiceRow.querySelectorAll('.voice-btn').forEach(item => {
-      const on = item === btn;
-      item.classList.toggle('selected', on);
-      item.setAttribute('aria-checked', String(on));
+  voiceRow.querySelectorAll('.voice-btn').forEach(btn => {
+    btn.disabled = false;
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      selectedVoice = btn.getAttribute('data-voice') || 'en-US-AvaNeural';
+      selectedVoiceLabel = btn.getAttribute('data-voice-label') || 'Ava';
+      voiceRow.querySelectorAll('.voice-btn').forEach(item => {
+        const on = item === btn;
+        item.classList.toggle('selected', on);
+        item.setAttribute('aria-pressed', String(on));
+      });
     });
   });
 }
