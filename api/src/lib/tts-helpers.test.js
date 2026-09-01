@@ -16,7 +16,9 @@ assert.equal(escapeXml('a&b<c>"d"\'e'), 'a&amp;b&lt;c&gt;&quot;d&quot;&apos;e');
 assert.equal(validateTtsBody(null).ok, false);
 assert.equal(validateTtsBody({ text: '   ' }).ok, false);
 assert.equal(validateTtsBody({ text: 'x'.repeat(201) }).ok, false);
-assert.equal(validateTtsBody({ text: 'Hello', voice: 'evil-voice' }).ok, false);
+assert.equal(validateTtsBody({ text: 'Hello', voice: 'en-US-AriaNeural' }).ok, true);
+assert.equal(validateTtsBody({ text: 'Hello', voice: 'en-US-GuyNeural' }).ok, true);
+assert.equal(validateTtsBody({ text: 'Hello', voice: 'en-US-JennyNeural' }).ok, true);
 
 const valid = validateTtsBody({ text: '  Hello world  ' });
 assert.equal(valid.ok, true);

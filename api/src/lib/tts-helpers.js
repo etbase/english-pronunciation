@@ -4,8 +4,10 @@ const MAX_TEXT_LENGTH = 200;
 const DEFAULT_VOICE = 'en-US-AvaNeural';
 const ALLOWED_VOICES = Object.freeze([
   'en-US-AvaNeural',
-  'en-US-AndrewNeural',
   'en-US-JennyNeural',
+  'en-US-AriaNeural',
+  'en-US-AndrewNeural',
+  'en-US-GuyNeural',
   'en-US-EmmaNeural'
 ]);
 

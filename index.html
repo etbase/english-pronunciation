@@ -51,6 +51,13 @@ and a bottle of water.</textarea>
     <button class="btn-stop" id="stopBtn" disabled><img src="assets/icons/stop.svg" alt="">停止錄音</button>
     <button class="btn-analyze" id="analyzeBtn" disabled><img src="assets/icons/analysis.svg" alt="">分析發音</button>
   </div>
+  <div class="voice-row" id="voiceRow" role="radiogroup" aria-label="Voice">
+    <button type="button" class="voice-btn selected" role="radio" aria-checked="true" data-voice="en-US-AvaNeural" data-voice-label="Ava">Ava</button>
+    <button type="button" class="voice-btn" role="radio" aria-checked="false" data-voice="en-US-JennyNeural" data-voice-label="Jenny">Jenny</button>
+    <button type="button" class="voice-btn" role="radio" aria-checked="false" data-voice="en-US-AriaNeural" data-voice-label="Aria">Aria</button>
+    <button type="button" class="voice-btn" role="radio" aria-checked="false" data-voice="en-US-AndrewNeural" data-voice-label="Andrew">Andrew</button>
+    <button type="button" class="voice-btn" role="radio" aria-checked="false" data-voice="en-US-GuyNeural" data-voice-label="Guy">Guy</button>
+  </div>
 
   <div class="volume-meter" id="volumeMeter" style="display:none">
     <span class="volume-label"><img src="assets/icons/microphone.svg" alt="">音量</span>

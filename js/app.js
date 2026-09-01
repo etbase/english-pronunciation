@@ -66,13 +66,33 @@ if(slowToggle){
   });
 }
 
+let selectedVoice = 'en-US-AvaNeural';
+let selectedVoiceLabel = 'Ava';
+const voiceRow = document.getElementById('voiceRow');
+if(voiceRow){
+  voiceRow.addEventListener('click', (event) => {
+    const btn = event.target.closest('.voice-btn');
+    if(!btn || !voiceRow.contains(btn)) return;
+    selectedVoice = btn.getAttribute('data-voice') || 'en-US-AvaNeural';
+    selectedVoiceLabel = btn.getAttribute('data-voice-label') || 'Ava';
+    voiceRow.querySelectorAll('.voice-btn').forEach(item => {
+      const on = item === btn;
+      item.classList.toggle('selected', on);
+      item.setAttribute('aria-checked', String(on));
+    });
+  });
+}
+
 speakBtn.addEventListener('click', async () => {
   const text = sentence.value.trim();
   if(!text){ setStatus('請先輸入英文句子。'); return; }
-  setStatus('正在播放標準發音……');
-  const result = await speakStandardPronunciation(text, { rate: isSlowPlayback ? 0.5 : 1.0 });
+  setStatus(`正在播放標準發音（${selectedVoiceLabel}）……`);
+  const result = await speakStandardPronunciation(text, {
+    rate: isSlowPlayback ? 0.5 : 1.0,
+    voice: selectedVoice
+  });
   if(result.source === 'azure'){
-    setStatus('正在播放標準發音。');
+    setStatus(`正在播放標準發音（${selectedVoiceLabel}）。`);
   }else if(result.source === 'fallback'){
     setStatus('Azure 語音暫時無法使用，已改用瀏覽器內建發音。');
   }
