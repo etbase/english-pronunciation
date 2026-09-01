@@ -7,11 +7,9 @@
   );
 
   global.PRONUNCIATION_CONFIG = {
-    // 本機預設打 Azure Functions 本機埠。
-    // 部署 GitHub Pages 前，把下面正式網址改成你的 Function App，例如：
-    // https://YOUR-FUNCTION-APP.azurewebsites.net/api/tts
+    // 本機打 Azure Functions 本機埠；GitHub Pages 打已部署的 Function（只有公開網址，沒有 Key）。
     ttsApiUrl: isLocal
       ? 'http://localhost:7071/api/tts'
-      : 'https://YOUR-FUNCTION-APP.azurewebsites.net/api/tts'
+      : 'https://etbase-pronunciation-tts.azurewebsites.net/api/tts'
   };
 })(window);

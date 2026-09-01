@@ -5,7 +5,7 @@
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "AZURE_SPEECH_KEY": "YOUR_KEY_HERE",
     "AZURE_SPEECH_REGION": "YOUR_REGION_HERE",
-    "ALLOWED_ORIGINS": "http://localhost:8080,http://127.0.0.1:8080,https://USERNAME.github.io"
+    "ALLOWED_ORIGINS": "http://localhost:8080,http://127.0.0.1:8080,https://etbase.github.io"
   },
   "Host": {
     "CORS": "http://localhost:8080,http://127.0.0.1:8080",

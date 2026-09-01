@@ -6,31 +6,7 @@
 # Azure Functions 本機機密（含真實 Speech Key）
 local.settings.json
 
-# Node（第一階段導入 Firebase / 建置工具後會用到）
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Firebase
-.firebase/
-firebase-debug.log
-firestore-debug.log
-ui-debug.log
-.runtimeconfig.json
-
-# 建置產物
-dist/
-build/
-
-# 作業系統 / 編輯器
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-
-
-# Node（第一階段導入 Firebase / 建置工具後會用到）
+# Node
 node_modules/
 npm-debug.log*
 yarn-debug.log*
