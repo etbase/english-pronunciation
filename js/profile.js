@@ -150,11 +150,7 @@ function rePracticeFromFolder(encodedText){
 
 function speakFromFolder(encodedText){
   const text = decodeURIComponent(encodedText);
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'en-US';
-  utter.rate = 0.9;
-  window.speechSynthesis.speak(utter);
+  speakStandardPronunciation(text);
 }
 
 function removeSavedSentence(encodedText){

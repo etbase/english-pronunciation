@@ -1,0 +1,16 @@
+{
+  "name": "english-pronunciation-api",
+  "version": "1.0.0",
+  "description": "Azure Functions backend for English Pronunciation TTS. Speech keys stay in Application Settings, never in the frontend.",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "test": "node src/lib/tts-helpers.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.7.0"
+  }
+}

@@ -39,11 +39,7 @@ renderHistory();
 
 function speak(encodedText){
   const text = decodeURIComponent(encodedText);
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'en-US';
-  utter.rate = 0.9;
-  window.speechSynthesis.speak(utter);
+  speakStandardPronunciation(text);
 }
 
 // 帶著這句話跳回練習頁，讓使用者可以直接重錄，不用再打一次句子。

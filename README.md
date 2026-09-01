@@ -7,7 +7,7 @@
 ## 目前 MVP 功能
 
 - 輸入英文句子（限 200 字，即時字數統計）
-- 播放美式標準發音（瀏覽器內建 Web Speech API），可切換慢速播放
+- 播放美式標準發音（Azure Neural TTS `en-US-AvaNeural`，經由 Azure Functions 後端；失敗時退回瀏覽器內建語音），可切換慢速播放
 - 麥克風錄音、播放、下載錄音檔（檔名自動帶入句子關鍵字＋時間戳）
 - 錄音時顯示即時音量條，確認麥克風正常收音
 - 可重複練習與重錄
@@ -21,8 +21,9 @@
 
 **目前：**
 
-- 純靜態網站：HTML5 / CSS3 / Vanilla JavaScript（無框架、無建置工具）
-- 瀏覽器原生 API：`SpeechSynthesis`（TTS）、`MediaRecorder`（錄音）
+- 靜態前端：HTML5 / CSS3 / Vanilla JavaScript（無框架、無建置工具），可部署 GitHub Pages
+- Azure Functions（Node.js）：`POST /api/tts` 代理呼叫 Azure Speech Text-to-Speech，金鑰只存在後端環境變數
+- 瀏覽器原生 API：`SpeechSynthesis`（TTS 後備）、`MediaRecorder`（錄音）
 - 狀態儲存：`localStorage`（僅存在使用者本機瀏覽器，無雲端同步）
 
 **規劃中（詳見開發路線圖）：**
@@ -44,13 +45,19 @@ english-pronunciation/
 ├── css/
 │   └── style.css        # 全站樣式
 ├── js/
-│   ├── app.js            # 練習頁核心邏輯（TTS、錄音、模擬評分、寫入歷史、累計練習統計）
+│   ├── app.js            # 練習頁核心邏輯（錄音、模擬評分、寫入歷史、累計練習統計）
+│   ├── config.js         # 前端公開設定（只有 TTS API 網址，沒有任何金鑰）
+│   ├── tts.js            # 全站標準發音播放（呼叫 /api/tts、session cache、playbackRate、speechSynthesis 後備）
 │   ├── login.js          # 登入邏輯（目前為模擬登入）
 │   ├── profile.js        # 我的帳戶頁邏輯（顯示使用者資料、編輯名字、資料夾清單、登出）
 │   ├── account-nav.js    # 依登入狀態切換帳戶圖示（側邊欄＋手機底部選單）要導向登入頁或個人頁面
 │   ├── history.js        # 歷史紀錄讀取與渲染
 │   ├── folders.js        # 資料夾收藏共用邏輯（資料存取＋收藏小面板 UI），練習頁／歷史紀錄頁／我的帳戶頁共用
 │   └── audio-player.js   # 自繪錄音播放條（取代原生 <audio controls>，避免瀏覽器內建深灰色時間軸），練習頁／歷史紀錄頁共用
+├── api/                  # Azure Functions 後端（TTS 代理，金鑰不進前端）
+│   ├── host.json
+│   ├── local.settings.json.example  # 本機環境變數範本（請複製成 local.settings.json 後自行填 Key）
+│   └── src/functions/tts.js         # POST /api/tts
 ├── assets/
 │   ├── characters/       # 角色情緒圖（預設／開心／生氣）
 │   └── icons/            # 介面圖示 (SVG)
@@ -89,6 +96,59 @@ http-server -p 8080
 
 > 部署到正式網域時，網站必須是 **HTTPS**，否則瀏覽器會直接封鎖麥克風權限。
 
+## 標準發音（Azure TTS）
+
+前端（GitHub Pages）不會持有 Azure Key。流程是：
+
+```
+GitHub Pages 前端  →  POST /api/tts  →  Azure Function  →  Azure Speech TTS
+```
+
+前端只傳送 `{ "text": "...", "voice": "en-US-AvaNeural" }`，回傳 MP3。同一句在同一個分頁 session 內會重用已下載的音訊；慢速播放只用 `playbackRate`（1.0 / 0.5），不會再向 Azure 收費。
+
+### 本機後端
+
+1. 安裝 [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local)
+2. 複製設定檔（這個檔**不要 commit**）：
+
+```bash
+cp api/local.settings.json.example api/local.settings.json
+```
+
+3. 由你本人把 `AZURE_SPEECH_KEY`、`AZURE_SPEECH_REGION` 填進 `api/local.settings.json`（不要貼到聊天室、不要寫進前端）
+4. 啟動：
+
+```bash
+cd api
+npm install
+npm start
+```
+
+Functions 本機預設是 `http://localhost:7071/api/tts`。前端用 `python3 -m http.server 8080` 開網站即可。
+
+### 正式環境（Azure Portal 手動設定）
+
+在 Function App → **Settings** → **Environment variables** / **Application settings** 新增：
+
+| 名稱 | 填什麼 |
+| --- | --- |
+| `AZURE_SPEECH_KEY` | Speech 資源的 Key 1（只貼在這裡） |
+| `AZURE_SPEECH_REGION` | 例如 `eastus` |
+| `ALLOWED_ORIGINS` | 你的 GitHub Pages 來源，例如 `https://USERNAME.github.io`（可逗號分隔多個；不要設 `*`） |
+
+Azure Portal 的 Function App → CORS 也請填同一個 GitHub Pages 來源，不要勾選「允許所有」。
+
+前端把 `js/config.js` 裡的正式網址改成：
+
+```text
+https://YOUR-FUNCTION-APP.azurewebsites.net/api/tts
+```
+
+這是公開 API 網址，不是金鑰。
+
+**絕對不要 commit：** `api/local.settings.json`、根目錄 `.env`、任何含真實 Key 的檔案。
+
+
 ## 開發路線圖
 
 **第一階段：帳號與資料儲存**
@@ -105,6 +165,12 @@ http-server -p 8080
 - 會員專屬功能與付費方案
 
 ## 版本紀錄
+
+### v5
+- 標準發音改走 Azure Functions `POST /api/tts` 代理 Azure Neural TTS（預設 `en-US-AvaNeural`），練習頁／歷史紀錄／資料夾共用同一套播放邏輯
+- Azure Speech Key 只存在 Function 後端環境變數，前端與 git 都不放金鑰
+- 同一句文字在分頁 session 內重用已取得的 MP3；慢速播放改用 `playbackRate`，不重複向 Azure 產生語音
+- Azure 失敗或尚未設定時，自動退回瀏覽器 `speechSynthesis`
 
 ### v4
 - 歷史紀錄保留筆數由 5 筆增加為 10 筆

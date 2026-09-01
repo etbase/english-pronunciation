@@ -11,7 +11,8 @@
 | `.env.example` | ✅ 可以 | 只是範例格式，裡面不該填真實的值 |
 | `.env` / `.env.local` | ❌ 絕對不行 | 已被 `.gitignore` 排除，也被 git hook 擋著 |
 | Firebase Service Account JSON（`serviceAccountKey.json` 之類） | ❌ 絕對不行 | 這是後端管理員權限的金鑼，洩漏等於整個專案被拿走控制權 |
-| 語音分析 API 金鑼（Azure Speech、Google Cloud 等） | ❌ 絕對不行 | 用量計費的金鑼，洩漏會被盜用，帳單算在你頭上 |
+| 語音分析／TTS API 金鑰（Azure Speech、Google Cloud 等） | ❌ 絕對不行 | 用量計費的金鑰，洩漏會被盜用，帳單算在你頭上 |
+| `api/local.settings.json` | ❌ 絕對不行 | Azure Functions 本機機密，已被 `.gitignore` 排除 |
 | `.pem` / `.p12` / `.key` 憑證檔 | ❌ 絕對不行 | 私鑼檔案 |
 
 ## 2. 本機的自動防護：Git Hooks
@@ -41,18 +42,21 @@ git config core.hooksPath .githooks
 
 這是為了避免開發時常見的錯誤：先用「測試模式」（完全開放讀寫）方便開發，正式上線忘記關掉，導致任何人都能讀取、竄改甚至刪除所有使用者的資料。正式導入 Firebase 時，記得把這兩份規則部署上去，不要一直停留在測試模式。
 
-## 4. Phase 2：語音分析 API 金鑼管理原則
+## 4. Azure Speech 金鑰管理原則
 
-這個專案是純靜態網站（GitHub Pages），前端的 HTML/CSS/JS **對所有使用者都是公開可見的**，這是網頁技術本身的特性，跟用哪個平台部署無關。所以：
+這個專案的前端會部署到 GitHub Pages，HTML/CSS/JS **對所有使用者都是公開可見的**。所以：
 
 - Firebase 用戶端設定值可以放在前端，沒問題
-- 但 Azure Speech / Google Cloud 這類「用量計費」的付費金鑼，**絕對不能**直接寫在前端程式碼裡，否則任何人都能從公開的網站原始碼把金鑼複製走，拿去盜用
-- 正確做法：透過 Firebase Cloud Functions（或其他後端）當中介 —— 前端呼叫自己的 Function，Function 再用「藏在伺服器端、外部看不到」的金鑼去呼叫 Azure/Google，付費金鑼永遠不會出現在前端程式碼或 git repo 裡
+- Azure Speech Key、Endpoint credential、Function key **絕對不能**出現在前端程式碼、`js/config.js`、browser request 的 query string、或任何會被 GitHub Pages 發布的檔案
+- **正確做法（已實作）：** 前端只呼叫自己的 Azure Function `POST /api/tts`，Function 再用伺服器端環境變數裡的 `AZURE_SPEECH_KEY` 去呼叫 Azure Speech。金鑰永遠不會出現在前端或 git repo
+- 本機把 Key 填進 `api/local.settings.json`（已被 gitignore）；正式環境填進 Azure Portal → Function App → Environment variables
+- `ALLOWED_ORIGINS` 請填 GitHub Pages 網址（例如 `https://USERNAME.github.io`），不要設成 `*`
+- 這個 Function 使用 `authLevel: anonymous`，因為 Function key 若放進前端就等於公開。目前靠 CORS 來源允許清單、文字長度限制、語音 allowlist 降低濫用；之後接正式登入時可以再加上使用者驗證與更嚴格的用量限制
 
 ## 5. 正式上線前的檢查清單
 
 - [ ] Firestore／Storage 規則已經從測試模式換成正式的存取控制規則
 - [ ] Google 登入的「已授權網域」已經加上正式網域
-- [ ] 語音分析 API 金鑼只存在後端環境變數，前端程式碼跟 git repo 裡都找不到
+- [ ] 語音分析／TTS API 金鑰只存在 Azure Function 後端環境變數，前端程式碼跟 git repo 裡都找不到
 - [ ] Firebase 專案已設定用量／帳單預算警示（Budget Alerts）
 - [ ] 確認 `.env`、Service Account JSON 等機密檔案從來沒有被 commit 過（可以用 `git log --all --full-history -- .env` 之類的指令檢查）

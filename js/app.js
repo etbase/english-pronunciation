@@ -51,25 +51,8 @@ if(saveFolderBtn){
   refreshSaveFolderBtnState();
 }
 
-// 瀏覽器內建語音（Web Speech API）免費但每個作業系統提供的語音不同，
-// 優先挑選使用者指定的 Daniel，若裝置上沒有這個語音則自動退回英文語音。
-let voices = [];
-function loadVoices(){ voices = window.speechSynthesis.getVoices(); }
-loadVoices();
-if('onvoiceschanged' in window.speechSynthesis){
-  window.speechSynthesis.onvoiceschanged = loadVoices;
-}
-
-function pickVoice(){
-  return voices.find(v => v.name === 'Daniel')
-    || voices.find(v => v.name.includes('Daniel'))
-    || voices.find(v => v.lang === 'en-US')
-    || voices.find(v => v.lang && v.lang.startsWith('en'))
-    || null;
-}
-
-// 慢速播放改用按鈕點擊切換（而不是勾選框），按一下在 1.0（正常）／0.5（慢速）之間切換，
-// 圖示文字顏色也會跟著變化，讓使用者更清楚知道目前是哪個狀態。
+// 慢速播放改用按鈕點擊切換（而不是勾選框），按一下在 1.0（正常）／0.5（慢速）之間切換。
+// 已取得的 Azure 音訊不會重新產生，只改 Audio.playbackRate。
 let isSlowPlayback = false;
 if(slowToggle){
   slowToggle.addEventListener('click', () => {
@@ -77,24 +60,22 @@ if(slowToggle){
     slowToggle.classList.toggle('active', isSlowPlayback);
     slowToggle.setAttribute('aria-pressed', String(isSlowPlayback));
     if(slowToggleRate) slowToggleRate.textContent = isSlowPlayback ? '0.5' : '1.0';
+    if(typeof setStandardPronunciationRate === 'function'){
+      setStandardPronunciationRate(isSlowPlayback ? 0.5 : 1.0);
+    }
   });
 }
 
-speakBtn.addEventListener('click', () => {
+speakBtn.addEventListener('click', async () => {
   const text = sentence.value.trim();
   if(!text){ setStatus('請先輸入英文句子。'); return; }
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  const voice = pickVoice();
-  if(voice){
-    utter.voice = voice;
-    utter.lang = voice.lang;
-  }else{
-    utter.lang = 'en-US';
+  setStatus('正在播放標準發音……');
+  const result = await speakStandardPronunciation(text, { rate: isSlowPlayback ? 0.5 : 1.0 });
+  if(result.source === 'azure'){
+    setStatus('正在播放標準發音。');
+  }else if(result.source === 'fallback'){
+    setStatus('Azure 語音暫時無法使用，已改用瀏覽器內建發音。');
   }
-  utter.rate = isSlowPlayback ? 0.5 : 1.0;
-  window.speechSynthesis.speak(utter);
-  setStatus('正在播放標準發音。正式版會改用 Azure AI 語音。');
 });
 
 // 用 Web Audio API 讀麥克風音量，錄音時顯示跳動的音量條，讓使用者確定真的有收到聲音。
@@ -148,6 +129,7 @@ function timestampLabel(){
 
 recordBtn.addEventListener('click', async () => {
   try{
+    if(typeof stopStandardPronunciation === 'function') stopStandardPronunciation();
     const stream = await navigator.mediaDevices.getUserMedia({audio:true});
     chunks = [];
     const types = ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];

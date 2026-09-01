@@ -10,7 +10,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # 檔名黑名單：這些檔案一律不該進 git，不管內容是什麼（.env.example 是唯一允許的例外）
-BLOCKED_NAME_PATTERN='(^|/)(\.env|\.env\.[a-zA-Z0-9]*\.?local|serviceAccountKey.*\.json|firebase-adminsdk.*\.json|.*\.pem|.*\.p12|.*\.key)$'
+BLOCKED_NAME_PATTERN='(^|/)(\.env|\.env\.[a-zA-Z0-9]*\.?local|local\.settings\.json|serviceAccountKey.*\.json|firebase-adminsdk.*\.json|.*\.pem|.*\.p12|.*\.key)$'
 
 # 內容黑名單：常見的機密金鑼格式
 CONTENT_PATTERNS=(
@@ -26,7 +26,7 @@ TMP_FLAG=$(mktemp)
 trap 'rm -f "$TMP_FLAG"' EXIT
 
 git diff --cached --name-only --diff-filter=ACM | while IFS= read -r file; do
-  if [ "$file" = ".env.example" ]; then
+  if [ "$file" = ".env.example" ] || [ "$file" = "api/local.settings.json.example" ]; then
     continue
   fi
 
