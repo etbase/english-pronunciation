@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20260902-assess4">
 </head>
 <body>
 <div class="app">
@@ -74,7 +74,7 @@ and a bottle of water.</textarea>
   <div class="result-top">
     <div class="score-ring" id="scoreRing"><div class="score-inner"><strong id="overall">--</strong><span>/100</span></div></div>
     <div>
-      <div class="overall-title">Overall Score</div>
+      <div class="overall-title">總體發音 <small>Overall</small></div>
       <div class="overall-good" id="scoreText"></div>
       <div class="overall-text" id="scoreMessage">尚未分析，請先錄音並按下「分析發音」查看結果。</div>
     </div>
@@ -84,21 +84,47 @@ and a bottle of water.</textarea>
   </div>
 
   <div class="metrics">
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-accuracy.svg" alt=""></div><div class="metric-name">發音準確度 <small>Accuracy</small></div><div class="bar"><span id="bar-accuracy" style="width:0%"></span></div><div class="value" id="value-accuracy">-- <small>/100</small></div></div>
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-stress.svg" alt=""></div><div class="metric-name">重音 <small>Stress</small></div><div class="bar"><span id="bar-stress" style="width:0%"></span></div><div class="value" id="value-stress">-- <small>/100</small></div></div>
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-rhythm.svg" alt=""></div><div class="metric-name">節奏 <small>Rhythm</small></div><div class="bar"><span id="bar-rhythm" style="width:0%"></span></div><div class="value" id="value-rhythm">-- <small>/100</small></div></div>
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-connected-speech.svg" alt=""></div><div class="metric-name">連音 <small>Connected Speech</small></div><div class="bar orange"><span id="bar-connected" style="width:0%"></span></div><div class="value" id="value-connected">-- <small>/100</small></div></div>
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-elision.svg" alt=""></div><div class="metric-name">省音 <small>Elision</small></div><div class="bar orange"><span id="bar-elision" style="width:0%"></span></div><div class="value" id="value-elision">-- <small>/100</small></div></div>
-    <div class="metric"><div class="metric-icon"><img src="assets/icons/metric-fluency.svg" alt=""></div><div class="metric-name">流暢度 <small>Fluency</small></div><div class="bar"><span id="bar-fluency" style="width:0%"></span></div><div class="value" id="value-fluency">-- <small>/100</small></div></div>
+    <div class="metric">
+      <div class="metric-icon"><img src="assets/icons/metric-accuracy.svg" alt=""></div>
+      <div class="metric-name">發音準確度 <small>Accuracy</small></div>
+      <div class="bar"><span id="bar-accuracy" style="width:0%"></span></div>
+      <div class="value" id="value-accuracy">-- <small>/100</small></div>
+    </div>
+    <div class="metric">
+      <div class="metric-icon"><img src="assets/icons/metric-fluency.svg" alt=""></div>
+      <div class="metric-name">流暢度 <small>Fluency</small></div>
+      <div class="bar"><span id="bar-fluency" style="width:0%"></span></div>
+      <div class="value" id="value-fluency">-- <small>/100</small></div>
+    </div>
+    <div class="metric">
+      <div class="metric-icon"><img src="assets/icons/metric-connected-speech.svg" alt=""></div>
+      <div class="metric-name">朗讀完整度 <small>Completeness</small></div>
+      <div class="bar"><span id="bar-completeness" style="width:0%"></span></div>
+      <div class="value" id="value-completeness">-- <small>/100</small></div>
+    </div>
+    <div class="metric metric-disabled" id="metric-prosody">
+      <div class="metric-icon"><img src="assets/icons/metric-stress.svg" alt=""></div>
+      <div class="metric-name">韻律自然度 <small>Prosody</small><span class="metric-sub">綜合重音、語調、語速與節奏</span></div>
+      <div class="bar bar-idle"><span id="bar-prosody" style="width:0%"></span></div>
+      <div class="value value-idle" id="value-prosody">尚未啟用</div>
+      <p class="metric-note">目前未啟用 Prosody；若需要加入韻律自然度評分，可於後續開啟。</p>
+    </div>
+  </div>
+
+  <div class="detail-analysis" id="detailAnalysis" hidden>
+    <div class="detail-title">詳細分析</div>
+    <div class="detail-groups" id="detailGroups"></div>
+    <div class="word-tree" id="wordTree"></div>
   </div>
 </section>
 </div>
-<footer>Prototype note：此版本的分數為前端模擬，用來確認 UI/流程。正式產品需串接 Azure Speech Pronunciation Assessment。</footer>
-<script src="js/config.js"></script>
-<script src="js/tts.js"></script>
-<script src="js/folders.js"></script>
-<script src="js/audio-player.js"></script>
-<script src="js/app.js"></script>
+<footer>發音分數來自 Azure Speech Pronunciation Assessment。韻律自然度（Prosody）目前尚未啟用。</footer>
+<script src="js/config.js?v=20260902-assess4"></script>
+<script src="js/tts.js?v=20260902-assess4"></script>
+<script src="js/folders.js?v=20260902-assess4"></script>
+<script src="js/audio-player.js?v=20260902-assess4"></script>
+<script src="js/wav.js?v=20260902-assess4"></script>
+<script src="js/app.js?v=20260902-assess4"></script>
 </main>
 <nav class="bottom-nav">
   <a class="bottom-nav-account" href="login.html" id="bottomAccountLink" aria-label="我的帳戶">

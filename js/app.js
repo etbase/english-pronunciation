@@ -19,6 +19,7 @@ enhanceAudioPlayer(audio, { autoShow: false });
 let mediaRecorder;
 let chunks = [];
 let currentBlobUrl = "";
+let lastRecordingBlob = null;
 
 function setStatus(text){ statusEl.textContent = text; }
 function updateCounter(){ counter.textContent = `${sentence.value.length} / 200`; }
@@ -159,12 +160,22 @@ recordBtn.addEventListener('click', async () => {
     const type = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
     mediaRecorder = type ? new MediaRecorder(stream,{mimeType:type}) : new MediaRecorder(stream);
 
-    mediaRecorder.ondataavailable = e => chunks.push(e.data);
+    mediaRecorder.ondataavailable = e => {
+      if(e.data && e.data.size > 0) chunks.push(e.data);
+    };
     mediaRecorder.onstop = () => {
       stopVolumeMeter();
       const actualType = mediaRecorder.mimeType || 'audio/webm';
       const blob = new Blob(chunks,{type:actualType});
-      currentBlobUrl = URL.createObjectURL(blob);
+      lastRecordingBlob = blob.size > 0 ? blob : null;
+      if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+      if(!lastRecordingBlob){
+        stream.getTracks().forEach(t => t.stop());
+        analyzeBtn.disabled = true;
+        setStatus('這次沒有錄到聲音，請再按「開始錄音」。');
+        return;
+      }
+      currentBlobUrl = URL.createObjectURL(lastRecordingBlob);
       audio.src = currentBlobUrl;
       showAudioPlayer(audio);
 
@@ -175,12 +186,12 @@ recordBtn.addEventListener('click', async () => {
 
       stream.getTracks().forEach(t => t.stop());
       analyzeBtn.disabled = false;
-      saveHistory(sentence.value.trim(), blob);
+      saveHistory(sentence.value.trim(), lastRecordingBlob);
       updatePracticeStats();
-      setStatus('錄音完成。可以播放確認，也可以下載音檔。');
+      setStatus(`錄音完成（${actualType}，${Math.round(lastRecordingBlob.size / 1024)} KB）。可以播放確認，再按「分析發音」。`);
     };
 
-    mediaRecorder.start();
+    mediaRecorder.start(250);
     startVolumeMeter(stream);
     recordBtn.disabled = true;
     stopBtn.disabled = false;
@@ -199,31 +210,271 @@ stopBtn.addEventListener('click', () => {
   }
 });
 
-const metricIds = ['accuracy','stress','rhythm','connected','elision','fluency'];
+const ASSESS_ERROR_TEXT = {
+  NO_RECORDING: '請先錄音，再按「分析發音」。',
+  NO_TEXT: '請先輸入英文句子。',
+  WAV_UNSUPPORTED: '這個瀏覽器無法轉換錄音格式，請改用 Chrome 或 Safari 再試。',
+  WAV_CONVERT_FAILED: '錄音無法轉成分析格式，請重新錄音後再試。',
+  WAV_ENCODE_FAILED: '錄音無法轉成分析格式，請重新錄音後再試。',
+  AUDIO_TOO_LONG: '錄音超過 30 秒，請改唸較短的句子後再分析。',
+  AUDIO_TOO_SHORT: '錄音太短，請重新錄一次後再分析。',
+  NO_SPEECH: '沒有辨識到清楚的英文，請重新錄音後再試。',
+  NOT_CONFIGURED: '評分服務尚未設定，目前無法分析。',
+  BAD_REQUEST: '送出的錄音或句子無法分析，請重新錄音後再試。',
+  ASSESS_FAILED: '目前無法完成發音分析，請稍後再試。',
+  NETWORK: '無法連線到評分服務，請確認網路後再試。'
+};
 
-analyzeBtn.addEventListener('click', () => {
-  const score = Math.floor(Math.random() * 41) + 50; // 50-90 demo
-  document.getElementById('overall').textContent = score;
-  document.getElementById('scoreRing').style.background = `conic-gradient(var(--teal) 0 ${score}%, #ecf8f7 ${score}% 100%)`;
+function assessApiUrl(){
+  const url = window.PRONUNCIATION_CONFIG && window.PRONUNCIATION_CONFIG.assessApiUrl;
+  return url || '';
+}
+
+function formatAzureScore(value){
+  if(typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.round(value);
+}
+
+function setMetricScore(id, value){
+  const score = formatAzureScore(value);
+  const bar = document.getElementById(`bar-${id}`);
+  const label = document.getElementById(`value-${id}`);
+  if(!bar || !label || score == null) return;
+  bar.style.width = `${Math.max(0, Math.min(100, score))}%`;
+  label.innerHTML = '';
+  label.appendChild(document.createTextNode(String(score) + ' '));
+  const small = document.createElement('small');
+  small.textContent = '/100';
+  label.appendChild(small);
+}
+
+function joinWords(items){
+  return (items || []).map(item => item.word).filter(Boolean).join('、');
+}
+
+function appendDetailGroup(parent, title, text){
+  const box = document.createElement('div');
+  box.className = 'detail-group';
+  const heading = document.createElement('strong');
+  heading.textContent = title;
+  const body = document.createElement('p');
+  body.textContent = text;
+  box.appendChild(heading);
+  box.appendChild(body);
+  parent.appendChild(box);
+}
+
+function phonemeLine(ph, threshold){
+  const score = formatAzureScore(ph.accuracyScore);
+  let line = `音素 ${ph.phoneme}`;
+  if(score != null) line += `　${score} / 100`;
+  if(score != null && score < threshold) line += '　需要注意';
+  return line;
+}
+
+function renderWordTree(words, threshold){
+  const tree = document.getElementById('wordTree');
+  if(!tree) return;
+  tree.innerHTML = '';
+  (words || []).forEach(word => {
+    const details = document.createElement('details');
+    details.className = 'word-item';
+    const hasIssue = word.errorType && word.errorType !== 'None';
+    const lowSyllable = (word.syllables || []).some(s => formatAzureScore(s.accuracyScore) != null && formatAzureScore(s.accuracyScore) < threshold);
+    const lowPhoneme = (word.syllables || []).some(s => (s.phonemes || []).some(p => formatAzureScore(p.accuracyScore) != null && formatAzureScore(p.accuracyScore) < threshold))
+      || (word.phonemes || []).some(p => formatAzureScore(p.accuracyScore) != null && formatAzureScore(p.accuracyScore) < threshold);
+    if(hasIssue || lowSyllable || lowPhoneme) details.open = true;
+
+    const summary = document.createElement('summary');
+    const name = document.createElement('span');
+    name.textContent = word.word;
+    if(hasIssue) name.className = 'word-flag';
+    const meta = document.createElement('span');
+    meta.className = 'word-item-meta';
+    const parts = [];
+    const wordScore = formatAzureScore(word.accuracyScore);
+    if(wordScore != null) parts.push(`${wordScore} / 100`);
+    if(word.errorType && word.errorType !== 'None') parts.push(word.errorType);
+    meta.textContent = parts.join('　');
+    summary.appendChild(name);
+    summary.appendChild(meta);
+    details.appendChild(summary);
+
+    const list = document.createElement('ul');
+    if(word.errorType === 'Mispronunciation'){
+      const li = document.createElement('li');
+      li.textContent = '發音需要注意';
+      list.appendChild(li);
+    }else if(word.errorType === 'Omission'){
+      const li = document.createElement('li');
+      li.textContent = '漏念';
+      list.appendChild(li);
+    }else if(word.errorType === 'Insertion'){
+      const li = document.createElement('li');
+      li.textContent = '多念';
+      list.appendChild(li);
+    }
+
+    (word.syllables || []).forEach(syl => {
+      const li = document.createElement('li');
+      const sylScore = formatAzureScore(syl.accuracyScore);
+      let text = `音節 ${syl.syllable}`;
+      if(sylScore != null) text += `　${sylScore} / 100`;
+      if(sylScore != null && sylScore < threshold) text += '　需要注意';
+      li.textContent = text;
+      if(syl.phonemes && syl.phonemes.length){
+        const nested = document.createElement('ul');
+        syl.phonemes.forEach(ph => {
+          const phLi = document.createElement('li');
+          phLi.textContent = phonemeLine(ph, threshold);
+          nested.appendChild(phLi);
+        });
+        li.appendChild(nested);
+      }
+      list.appendChild(li);
+    });
+
+    (word.phonemes || []).forEach(ph => {
+      const li = document.createElement('li');
+      li.textContent = phonemeLine(ph, threshold);
+      list.appendChild(li);
+    });
+
+    if(list.childNodes.length) details.appendChild(list);
+    tree.appendChild(details);
+  });
+}
+
+function renderAssessment(result){
+  const scores = result.displayScores || {};
+  const overall = formatAzureScore(scores.overall);
+  if(overall == null){
+    throw new Error('ASSESS_FAILED');
+  }
+
+  document.getElementById('overall').textContent = String(overall);
+  document.getElementById('scoreRing').style.background = `conic-gradient(var(--teal) 0 ${overall}%, #ecf8f7 ${overall}% 100%)`;
+  setMetricScore('accuracy', scores.accuracy);
+  setMetricScore('fluency', scores.fluency);
+  setMetricScore('completeness', scores.completeness);
 
   const img = document.getElementById('characterImage');
   if(img){
     img.onerror = null;
-    img.src = score >= 60 ? 'assets/characters/character-koala-happy.png' : 'assets/characters/character-koala-angry.png';
+    img.src = overall >= 60 ? 'assets/characters/character-koala-happy.png' : 'assets/characters/character-koala-angry.png';
   }
-  document.getElementById('scoreText').textContent = score >= 60 ? 'Great!' : 'Keep Trying!';
-  document.getElementById('scoreMessage').innerHTML = score >= 60
-    ? '你的發音清晰，節奏掌握得不錯，<br>再練習連音會更自然喔！'
-    : '這次分數偏低，可以先放慢速度，<br>再重新錄一次。';
 
-  metricIds.forEach(id => {
-    const metricScore = Math.floor(Math.random() * 41) + 50; // 50-90 demo，暫用與 overall 相同的模擬邏輯
-    document.getElementById(`bar-${id}`).style.width = `${metricScore}%`;
-    document.getElementById(`value-${id}`).innerHTML = `${metricScore} <small>/100</small>`;
+  const issues = result.issues || {};
+  const mis = joinWords(issues.mispronunciations);
+  const omitted = joinWords(issues.omissions);
+  const inserted = joinWords(issues.insertions);
+  const facts = [];
+  if(result.recognizedText) facts.push(`Azure 辨識為：${result.recognizedText}`);
+  if(mis) facts.push(`發音需要注意：${mis}`);
+  if(omitted) facts.push(`漏念：${omitted}`);
+  if(inserted) facts.push(`多念：${inserted}`);
+  if(!mis && !omitted && !inserted) facts.push('Azure 未標示漏字、多字或發音不準的單字。');
+  document.getElementById('scoreText').textContent = '';
+  document.getElementById('scoreMessage').textContent = facts.join(' ');
+
+  const groups = document.getElementById('detailGroups');
+  const detail = document.getElementById('detailAnalysis');
+  if(groups && detail){
+    groups.innerHTML = '';
+    appendDetailGroup(groups, '發音需要注意', mis || 'Azure 未標示發音不準的單字。');
+    appendDetailGroup(groups, '漏念', omitted || 'Azure 未標示漏念的單字。');
+    appendDetailGroup(groups, '多念', inserted || 'Azure 未標示多念的單字。');
+    renderWordTree(result.words || [], result.lowAccuracyThreshold || 60);
+    detail.hidden = false;
+  }
+}
+
+function assessFailureMessage(code){
+  return ASSESS_ERROR_TEXT[code] || ASSESS_ERROR_TEXT.ASSESS_FAILED;
+}
+
+function isLocalAssessDebug(){
+  return location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+}
+
+function assessDebug(label, detail){
+  if(!isLocalAssessDebug()) return;
+  if(detail === undefined){
+    console.info('[assess]', label);
+    return;
+  }
+  console.info('[assess]', label, detail);
+}
+
+analyzeBtn.addEventListener('click', async () => {
+  const text = sentence.value.trim();
+  if(!text){
+    setStatus(ASSESS_ERROR_TEXT.NO_TEXT);
+    return;
+  }
+  if(!lastRecordingBlob){
+    setStatus(ASSESS_ERROR_TEXT.NO_RECORDING);
+    return;
+  }
+  const apiUrl = assessApiUrl();
+  if(!apiUrl){
+    setStatus(ASSESS_ERROR_TEXT.NOT_CONFIGURED);
+    return;
+  }
+
+  analyzeBtn.disabled = true;
+  setStatus('正在準備音訊並送出分析……');
+  assessDebug('start', {
+    apiUrl,
+    textChars: text.length,
+    recordingType: lastRecordingBlob.type || '',
+    recordingBytes: lastRecordingBlob.size
   });
 
-  updateHistoryScore(sentence.value.trim(), score);
-  setStatus('目前為模擬分析。正式版會把錄音送到 Azure Speech 做真正分析。');
+  try{
+    const wavBlob = await recordingBlobToAssessmentWav(lastRecordingBlob);
+    assessDebug('wav converted', { wavType: wavBlob.type || 'audio/wav', wavBytes: wavBlob.size });
+    setStatus('音訊已轉換，正在送出 Azure 分析……');
+    const audioBase64 = await assessmentWavToBase64(wavBlob);
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, audioBase64 })
+    });
+    let payload = null;
+    try{ payload = await response.json(); }catch(e){ payload = null; }
+    if(!response.ok || !payload || !payload.scores){
+      const code = payload && payload.code ? payload.code : (response.status === 422 ? 'NO_SPEECH' : 'ASSESS_FAILED');
+      assessDebug('response failed', {
+        httpStatus: response.status,
+        code,
+        error: payload && payload.error ? payload.error : 'response parse failed or scores missing'
+      });
+      setStatus(assessFailureMessage(code));
+      return;
+    }
+    assessDebug('response ok', {
+      httpStatus: response.status,
+      PronScore: payload.scores.overall,
+      AccuracyScore: payload.scores.accuracy,
+      FluencyScore: payload.scores.fluency,
+      CompletenessScore: payload.scores.completeness,
+      wordCount: Array.isArray(payload.words) ? payload.words.length : 0
+    });
+    renderAssessment(payload);
+    updateHistoryScore(text, payload.displayScores || payload.scores);
+    setStatus('分析完成。分數來自 Azure Pronunciation Assessment。');
+  }catch(error){
+    const message = error && error.message ? String(error.message) : '';
+    assessDebug('client exception', { name: error && error.name, message });
+    if(message === 'Failed to fetch' || message === 'Load failed' || message === 'NetworkError when attempting to fetch resource.'){
+      setStatus(ASSESS_ERROR_TEXT.NETWORK);
+    }else{
+      setStatus(assessFailureMessage(message || 'ASSESS_FAILED'));
+    }
+  }finally{
+    analyzeBtn.disabled = false;
+  }
 });
 
 // 錄音改存成 Base64（data URL）而非 Blob URL，避免重新整理頁面後歷史紀錄的音檔失效。
@@ -259,12 +510,18 @@ function saveHistory(text, audioBlob){
 
 // 錄音跟分析是分開兩個步驟：錄完先存一筆沒有分數的紀錄，等按下「分析發音」算出分數後，
 // 再用句子文字找回剛剛那筆紀錄補上分數，這樣歷史紀錄才能顯示每句話的分析結果。
-function updateHistoryScore(text, score){
-  if(!text) return;
+function updateHistoryScore(text, scores){
+  if(!text || !scores) return;
   const records = JSON.parse(localStorage.getItem('pronunciationHistory') || '[]');
   const idx = records.findIndex(r => r.text === text);
   if(idx === -1) return;
-  records[idx].score = score;
+  const overall = formatAzureScore(scores.overall);
+  if(overall == null) return;
+  records[idx].score = overall;
+  records[idx].accuracyScore = formatAzureScore(scores.accuracy);
+  records[idx].fluencyScore = formatAzureScore(scores.fluency);
+  records[idx].completenessScore = formatAzureScore(scores.completeness);
+  delete records[idx].prosodyScore;
   try{ localStorage.setItem('pronunciationHistory', JSON.stringify(records)); }catch(e){ /* 容量不足就不補分數，不影響其他紀錄 */ }
 }
 

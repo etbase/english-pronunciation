@@ -7,9 +7,12 @@
   );
 
   global.PRONUNCIATION_CONFIG = {
-    // 本機打 Azure Functions 本機埠；GitHub Pages 打已部署的 Function（只有公開網址，沒有 Key）。
+    // 本機改打同一個 origin 的 /api/*，避免 Chrome 跨埠（8080→7071）被當成無法連線。
     ttsApiUrl: isLocal
-      ? 'http://localhost:7071/api/tts'
-      : 'https://etbase-pronunciation-tts.azurewebsites.net/api/tts'
+      ? global.location.origin + '/api/tts'
+      : 'https://etbase-pronunciation-tts.azurewebsites.net/api/tts',
+    assessApiUrl: isLocal
+      ? global.location.origin + '/api/assess'
+      : 'https://etbase-pronunciation-tts.azurewebsites.net/api/assess'
   };
 })(window);
