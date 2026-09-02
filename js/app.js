@@ -252,97 +252,103 @@ function joinWords(items){
   return (items || []).map(item => item.word).filter(Boolean).join('、');
 }
 
-function appendDetailGroup(parent, title, text){
+function joinIssueWords(items){
+  return (items || []).map(item => item.word).filter(Boolean).join(' ・ ');
+}
+
+function phonemesOfWord(word){
+  const list = [];
+  (word.syllables || []).forEach(syl => {
+    (syl.phonemes || []).forEach(ph => list.push(ph));
+  });
+  (word.phonemes || []).forEach(ph => list.push(ph));
+  return list;
+}
+
+function attentionPhonemes(word, threshold){
+  const seen = new Set();
+  const result = [];
+  phonemesOfWord(word).forEach(ph => {
+    const symbol = ph && ph.phoneme ? String(ph.phoneme) : '';
+    const score = formatAzureScore(ph && ph.accuracyScore);
+    if(!symbol || score == null || score >= threshold || seen.has(symbol)) return;
+    seen.add(symbol);
+    result.push(symbol);
+  });
+  return result;
+}
+
+function appendDetailGroup(parent, title, child){
   const box = document.createElement('div');
   box.className = 'detail-group';
   const heading = document.createElement('strong');
   heading.textContent = title;
-  const body = document.createElement('p');
-  body.textContent = text;
   box.appendChild(heading);
-  box.appendChild(body);
+  box.appendChild(child);
   parent.appendChild(box);
 }
 
-function phonemeLine(ph, threshold){
-  const score = formatAzureScore(ph.accuracyScore);
-  let line = `音素 ${ph.phoneme}`;
-  if(score != null) line += `　${score} / 100`;
-  if(score != null && score < threshold) line += '　需要注意';
-  return line;
-}
-
-function renderWordTree(words, threshold){
+function renderDetailAnalysis(result){
+  const groups = document.getElementById('detailGroups');
   const tree = document.getElementById('wordTree');
-  if(!tree) return;
-  tree.innerHTML = '';
-  (words || []).forEach(word => {
-    const details = document.createElement('details');
-    details.className = 'word-item';
-    const hasIssue = word.errorType && word.errorType !== 'None';
-    const lowSyllable = (word.syllables || []).some(s => formatAzureScore(s.accuracyScore) != null && formatAzureScore(s.accuracyScore) < threshold);
-    const lowPhoneme = (word.syllables || []).some(s => (s.phonemes || []).some(p => formatAzureScore(p.accuracyScore) != null && formatAzureScore(p.accuracyScore) < threshold))
-      || (word.phonemes || []).some(p => formatAzureScore(p.accuracyScore) != null && formatAzureScore(p.accuracyScore) < threshold);
-    if(hasIssue || lowSyllable || lowPhoneme) details.open = true;
+  const detail = document.getElementById('detailAnalysis');
+  if(!groups || !detail) return;
 
-    const summary = document.createElement('summary');
-    const name = document.createElement('span');
-    name.textContent = word.word;
-    if(hasIssue) name.className = 'word-flag';
-    const meta = document.createElement('span');
-    meta.className = 'word-item-meta';
-    const parts = [];
-    const wordScore = formatAzureScore(word.accuracyScore);
-    if(wordScore != null) parts.push(`${wordScore} / 100`);
-    if(word.errorType && word.errorType !== 'None') parts.push(word.errorType);
-    meta.textContent = parts.join('　');
-    summary.appendChild(name);
-    summary.appendChild(meta);
-    details.appendChild(summary);
+  groups.innerHTML = '';
+  if(tree) tree.innerHTML = '';
 
-    const list = document.createElement('ul');
-    if(word.errorType === 'Mispronunciation'){
-      const li = document.createElement('li');
-      li.textContent = '發音需要注意';
-      list.appendChild(li);
-    }else if(word.errorType === 'Omission'){
-      const li = document.createElement('li');
-      li.textContent = '漏念';
-      list.appendChild(li);
-    }else if(word.errorType === 'Insertion'){
-      const li = document.createElement('li');
-      li.textContent = '多念';
-      list.appendChild(li);
-    }
+  const threshold = typeof result.lowAccuracyThreshold === 'number'
+    ? result.lowAccuracyThreshold
+    : 60;
+  const words = result.words || [];
+  const misWords = words.filter(word => word.errorType === 'Mispronunciation');
+  const omissions = (result.issues && result.issues.omissions) || [];
+  const insertions = (result.issues && result.issues.insertions) || [];
 
-    (word.syllables || []).forEach(syl => {
-      const li = document.createElement('li');
-      const sylScore = formatAzureScore(syl.accuracyScore);
-      let text = `音節 ${syl.syllable}`;
-      if(sylScore != null) text += `　${sylScore} / 100`;
-      if(sylScore != null && sylScore < threshold) text += '　需要注意';
-      li.textContent = text;
-      if(syl.phonemes && syl.phonemes.length){
-        const nested = document.createElement('ul');
-        syl.phonemes.forEach(ph => {
-          const phLi = document.createElement('li');
-          phLi.textContent = phonemeLine(ph, threshold);
-          nested.appendChild(phLi);
-        });
-        li.appendChild(nested);
+  if(misWords.length){
+    const list = document.createElement('div');
+    list.className = 'detail-issue-list';
+    misWords.forEach(word => {
+      const item = document.createElement('div');
+      item.className = 'detail-issue';
+      const name = document.createElement('div');
+      name.className = 'detail-issue-word';
+      name.textContent = word.word;
+      item.appendChild(name);
+      const attention = attentionPhonemes(word, threshold);
+      if(attention.length){
+        const phonemes = document.createElement('p');
+        phonemes.className = 'detail-issue-phonemes';
+        phonemes.textContent = '需要注意的音：' + attention.map(symbol => '/' + symbol + '/').join('、');
+        item.appendChild(phonemes);
       }
-      list.appendChild(li);
+      list.appendChild(item);
     });
+    appendDetailGroup(groups, '發音需要注意', list);
+  }
 
-    (word.phonemes || []).forEach(ph => {
-      const li = document.createElement('li');
-      li.textContent = phonemeLine(ph, threshold);
-      list.appendChild(li);
-    });
+  if(omissions.length){
+    const body = document.createElement('p');
+    body.className = 'detail-word-run';
+    body.textContent = joinIssueWords(omissions);
+    appendDetailGroup(groups, '漏念', body);
+  }
 
-    if(list.childNodes.length) details.appendChild(list);
-    tree.appendChild(details);
-  });
+  if(insertions.length){
+    const body = document.createElement('p');
+    body.className = 'detail-word-run';
+    body.textContent = joinIssueWords(insertions);
+    appendDetailGroup(groups, '多念', body);
+  }
+
+  if(!misWords.length && !omissions.length && !insertions.length){
+    const empty = document.createElement('p');
+    empty.className = 'detail-empty';
+    empty.textContent = '本次沒有偵測到明顯的發音問題。';
+    groups.appendChild(empty);
+  }
+
+  detail.hidden = false;
 }
 
 function renderAssessment(result){
@@ -377,16 +383,7 @@ function renderAssessment(result){
   document.getElementById('scoreText').textContent = '';
   document.getElementById('scoreMessage').textContent = facts.join(' ');
 
-  const groups = document.getElementById('detailGroups');
-  const detail = document.getElementById('detailAnalysis');
-  if(groups && detail){
-    groups.innerHTML = '';
-    appendDetailGroup(groups, '發音需要注意', mis || 'Azure 未標示發音不準的單字。');
-    appendDetailGroup(groups, '漏念', omitted || 'Azure 未標示漏念的單字。');
-    appendDetailGroup(groups, '多念', inserted || 'Azure 未標示多念的單字。');
-    renderWordTree(result.words || [], result.lowAccuracyThreshold || 60);
-    detail.hidden = false;
-  }
+  renderDetailAnalysis(result);
 }
 
 function assessFailureMessage(code){

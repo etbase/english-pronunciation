@@ -175,11 +175,17 @@ a.download-link{display:none;margin-bottom:28px;margin-left:auto;text-decoration
 .value{font-size:22px;font-weight:900;text-align:right;color:var(--text)}.value small{font-size:13px;font-weight:400;color:var(--muted)}.value-idle{font-size:13px;font-weight:500;color:var(--muted)}
 .detail-analysis{margin-top:22px;padding-top:8px;border-top:1px solid #eef1f4}
 .detail-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px}
-.detail-groups{display:grid;gap:10px;margin-bottom:16px}
+.detail-groups{display:grid;gap:10px}
 .detail-group{background:#fbfcfd;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 .detail-group strong{display:block;font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
 .detail-group p{margin:0;font-size:14px;line-height:1.6;color:var(--muted);font-weight:400}
+.detail-issue-list{display:grid;gap:10px}
+.detail-issue-word{font-size:15px;font-weight:700;color:var(--text)}
+.detail-issue-phonemes{margin:4px 0 0;font-size:14px;line-height:1.6;color:var(--muted);font-weight:400}
+.detail-word-run{margin:0;font-size:15px;line-height:1.7;color:var(--text);font-weight:500}
+.detail-empty{margin:0;font-size:14px;line-height:1.6;color:var(--muted);font-weight:400}
 .word-tree{display:grid;gap:8px}
+.word-tree:empty{display:none}
 .word-item{border:1px solid var(--line);border-radius:14px;background:white;padding:10px 12px}
 .word-item summary{cursor:pointer;font-weight:700;color:var(--text);list-style:none;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:14px}
 .word-item summary::-webkit-details-marker{display:none}
