@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="only light">
+  <title>課程學習｜ERIC TING English Pronunciation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=20260903-course3">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <a class="account-icon" href="login.html" aria-label="我的帳戶"><img src="assets/icons/profile.svg" alt=""></a>
+  <script>(function(){try{var u=JSON.parse(localStorage.getItem('pronunciationUser')||'null');if(u&&u.name){var a=document.currentScript.previousElementSibling;a.href='profile.html';a.innerHTML='<span class="account-icon-initial">'+(u.name.trim().charAt(0)||'?').toUpperCase()+'</span>';}}catch(e){}})();</script>
+  <nav class="nav">
+    <a href="course.html" class="active"><img src="assets/icons/course-book.svg" alt="">課程學習</a>
+    <a href="index.html"><img src="assets/icons/home.svg" alt="">自由練習</a>
+    <a href="history.html"><img src="assets/icons/history.svg" alt="">歷史紀錄</a>
+  </nav>
+  <a class="help-link" href="help.html"><img src="assets/icons/help.svg" alt="">使用說明</a>
+</aside>
+<main>
+<header class="header">
+  <div class="title">
+    <h1>ERIC TING</h1>
+    <h2>English Pronunciation</h2>
+    <div class="subtitle">MVP Prototype | Listen, Record & Get Instant Feedback</div>
+  </div>
+</header>
+
+<div id="courseHomeView">
+  <section class="card page-card">
+    <div class="section-title"><span class="num"><img src="assets/icons/course-book.svg" alt=""></span>課程學習</div>
+    <p class="hint">先從一個 Unit 開始，點進去後可以看到完整句子列表。</p>
+    <div class="course-unit-grid" id="courseUnitGrid"></div>
+  </section>
+</div>
+
+<div id="courseUnitView" hidden>
+  <div class="course-unit-layout">
+    <a class="course-back" id="courseUnitBack" href="course.html">← 全部課程</a>
+    <div class="course-unit-workspace">
+      <section class="card course-sentence-panel">
+        <div class="course-unit-kicker" id="courseUnitEyebrow">Unit 01</div>
+        <h3 class="course-unit-heading" id="courseUnitTitleEn"></h3>
+        <div class="course-unit-subheading" id="courseUnitTitleZh"></div>
+        <div class="course-unit-count" id="courseUnitCount"></div>
+        <div class="course-sentence-list" id="courseSentenceList"></div>
+      </section>
+
+      <aside class="course-practice-col" id="coursePracticeCol">
+        <section class="card course-practice-panel" id="coursePracticePanel">
+          <div class="section-title"><span class="num">1</span>練習這句</div>
+          <div class="course-practice-sentence" id="coursePracticeText">請從左側選擇一句開始練習。</div>
+          <div class="button-row course-practice-buttons">
+            <button class="btn-listen" id="speakBtn" disabled><img src="assets/icons/speaker.svg" alt="">播放發音</button>
+            <button class="btn-record" id="recordBtn" disabled><img src="assets/icons/microphone.svg" alt="">開始錄音</button>
+            <button class="btn-stop" id="stopBtn" disabled><img src="assets/icons/stop.svg" alt="">停止錄音</button>
+            <button class="btn-analyze" id="analyzeBtn" disabled><img src="assets/icons/analysis.svg" alt="">分析發音</button>
+          </div>
+
+          <div class="volume-meter" id="volumeMeter" style="display:none">
+            <span class="volume-label"><img src="assets/icons/microphone.svg" alt="">音量</span>
+            <div class="volume-bar"><div class="volume-fill" id="volumeFill"></div></div>
+          </div>
+
+          <div class="notice" id="status">請先從左側選擇一句，再播放標準發音或開始錄音。</div>
+          <audio id="audio" controls style="display:none;width:100%;margin-bottom:12px"></audio>
+
+          <div class="section-title"><span class="num">2</span>發音分析結果</div>
+          <div class="result-top">
+            <div class="score-ring" id="scoreRing"><div class="score-inner"><strong id="overall">--</strong><span>/100</span></div></div>
+            <div>
+              <div class="overall-title">總體發音 <small>Overall</small></div>
+              <div class="overall-good" id="scoreText"></div>
+              <div class="overall-text" id="scoreMessage">尚未分析，請先錄音並按下「分析發音」查看結果。</div>
+            </div>
+            <div class="character-box">
+              <img id="characterImage" src="assets/characters/character-koala-default.png" alt="角色" onerror="this.outerHTML='<div class=&quot;character-missing&quot;>角色圖片預留區<br>character-koala-default.png</div>'">
+            </div>
+          </div>
+
+          <div class="metrics">
+            <div class="metric">
+              <div class="metric-icon"><img src="assets/icons/metric-accuracy.svg" alt=""></div>
+              <div class="metric-name">發音準確度 <small>Accuracy</small></div>
+              <div class="bar"><span id="bar-accuracy" style="width:0%"></span></div>
+              <div class="value" id="value-accuracy">-- <small>/100</small></div>
+            </div>
+            <div class="metric">
+              <div class="metric-icon"><img src="assets/icons/metric-fluency.svg" alt=""></div>
+              <div class="metric-name">流暢度 <small>Fluency</small></div>
+              <div class="bar"><span id="bar-fluency" style="width:0%"></span></div>
+              <div class="value" id="value-fluency">-- <small>/100</small></div>
+            </div>
+            <div class="metric">
+              <div class="metric-icon"><img src="assets/icons/metric-connected-speech.svg" alt=""></div>
+              <div class="metric-name">朗讀完整度 <small>Completeness</small></div>
+              <div class="bar"><span id="bar-completeness" style="width:0%"></span></div>
+              <div class="value" id="value-completeness">-- <small>/100</small></div>
+            </div>
+            <div class="metric metric-disabled" id="metric-prosody">
+              <div class="metric-icon"><img src="assets/icons/metric-stress.svg" alt=""></div>
+              <div class="metric-name">韻律自然度 <small>Prosody</small><span class="metric-sub">綜合重音、語調、語速與節奏</span></div>
+              <div class="bar bar-idle"><span id="bar-prosody" style="width:0%"></span></div>
+              <div class="value value-idle" id="value-prosody">尚未啟用</div>
+              <p class="metric-note">目前未啟用 Prosody；若需要加入韻律自然度評分，可於後續開啟。</p>
+            </div>
+          </div>
+
+          <div class="detail-analysis" id="detailAnalysis" hidden>
+            <div class="detail-title">詳細分析</div>
+            <div class="detail-groups" id="detailGroups"></div>
+            <div class="word-tree" id="wordTree"></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</div>
+</main>
+<nav class="bottom-nav">
+  <a class="bottom-nav-account" href="login.html" id="bottomAccountLink">
+    <span class="bottom-nav-icon" id="bottomAccountIcon"><img src="assets/icons/profile.svg" alt=""></span>
+    <span>個人</span>
+  </a>
+  <a href="course.html" class="active">
+    <span class="bottom-nav-icon"><img src="assets/icons/course-book.svg" alt=""></span>
+    <span>課程學習</span>
+  </a>
+  <a href="index.html">
+    <span class="bottom-nav-icon"><img src="assets/icons/home.svg" alt=""></span>
+    <span>自由練習</span>
+  </a>
+  <a href="history.html">
+    <span class="bottom-nav-icon"><img src="assets/icons/history.svg" alt=""></span>
+    <span>歷史紀錄</span>
+  </a>
+  <a href="help.html">
+    <span class="bottom-nav-icon"><img src="assets/icons/help.svg" alt=""></span>
+    <span>使用說明</span>
+  </a>
+</nav>
+<script src="js/account-nav.js"></script>
+<script src="js/config.js?v=20260903-course2"></script>
+<script src="js/tts.js?v=20260903-course2"></script>
+<script src="js/audio-player.js?v=20260903-course2"></script>
+<script src="js/wav.js?v=20260903-course2"></script>
+<script src="js/assess-ui.js?v=20260903-course2"></script>
+<script src="js/course-data.js?v=20260903-course2"></script>
+<script src="js/course-practice.js?v=20260903-course2"></script>
+<script src="js/course.js?v=20260903-course2"></script>
+</div>
+</body>
+</html>

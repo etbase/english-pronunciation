@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="only light">
-  <title>練習｜ERIC TING English Pronunciation</title>
+  <title>自由練習｜ERIC TING English Pronunciation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260902-assess5">
+  <link rel="stylesheet" href="css/style.css?v=20260903-course2">
 </head>
 <body>
 <div class="app">
@@ -16,8 +16,9 @@
   <a class="account-icon" href="login.html" aria-label="我的帳戶"><img src="assets/icons/profile.svg" alt=""></a>
   <script>(function(){try{var u=JSON.parse(localStorage.getItem('pronunciationUser')||'null');if(u&&u.name){var a=document.currentScript.previousElementSibling;a.href='profile.html';a.innerHTML='<span class="account-icon-initial">'+(u.name.trim().charAt(0)||'?').toUpperCase()+'</span>';}}catch(e){}})();</script>
   <nav class="nav">
-    <a href="index.html" class="active"><img src="assets/icons/home.svg" alt="">發音練習</a>
-    <a href="history.html" class=""><img src="assets/icons/history.svg" alt="">歷史紀錄</a>
+    <a href="course.html"><img src="assets/icons/course-book.svg" alt="">課程學習</a>
+    <a href="index.html" class="active"><img src="assets/icons/home.svg" alt="">自由練習</a>
+    <a href="history.html"><img src="assets/icons/history.svg" alt="">歷史紀錄</a>
   </nav>
   <a class="help-link" href="help.html"><img src="assets/icons/help.svg" alt="">使用說明</a>
 </aside>
@@ -119,26 +120,32 @@ and a bottle of water.</textarea>
 </section>
 </div>
 <footer>發音分數來自 Azure Speech Pronunciation Assessment。韻律自然度（Prosody）目前尚未啟用。</footer>
-<script src="js/config.js?v=20260902-assess5"></script>
-<script src="js/tts.js?v=20260902-assess5"></script>
-<script src="js/folders.js?v=20260902-assess5"></script>
-<script src="js/audio-player.js?v=20260902-assess5"></script>
-<script src="js/wav.js?v=20260902-assess5"></script>
-<script src="js/app.js?v=20260902-assess5"></script>
+<script src="js/config.js?v=20260903-course2"></script>
+<script src="js/tts.js?v=20260903-course2"></script>
+<script src="js/folders.js?v=20260903-course2"></script>
+<script src="js/audio-player.js?v=20260903-course2"></script>
+<script src="js/wav.js?v=20260903-course2"></script>
+<script src="js/assess-ui.js?v=20260903-course2"></script>
+<script src="js/app.js?v=20260903-course2"></script>
 </main>
 <nav class="bottom-nav">
-  <a class="bottom-nav-account" href="login.html" id="bottomAccountLink" aria-label="我的帳戶">
+  <a class="bottom-nav-account" href="login.html" id="bottomAccountLink">
     <span class="bottom-nav-icon" id="bottomAccountIcon"><img src="assets/icons/profile.svg" alt=""></span>
+    <span>個人</span>
+  </a>
+  <a href="course.html">
+    <span class="bottom-nav-icon"><img src="assets/icons/course-book.svg" alt=""></span>
+    <span>課程學習</span>
   </a>
   <a href="index.html" class="active">
     <span class="bottom-nav-icon"><img src="assets/icons/home.svg" alt=""></span>
-    <span>發音練習</span>
+    <span>自由練習</span>
   </a>
-  <a href="history.html" class="">
+  <a href="history.html">
     <span class="bottom-nav-icon"><img src="assets/icons/history.svg" alt=""></span>
     <span>歷史紀錄</span>
   </a>
-  <a href="help.html" class="">
+  <a href="help.html">
     <span class="bottom-nav-icon"><img src="assets/icons/help.svg" alt=""></span>
     <span>使用說明</span>
   </a>
