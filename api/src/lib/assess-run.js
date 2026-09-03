@@ -6,7 +6,8 @@ const {
   getAssessUrl,
   buildPronunciationAssessmentHeader,
   validateAssessBody,
-  parseAssessmentResult
+  parseAssessmentResult,
+  buildAssessmentDiagnostic
 } = require('./assess-helpers');
 
 function jsonResponse(status, payload, origin){
@@ -37,6 +38,16 @@ function describeFetchError(error){
     if(cause.message) parts.push(redactDebugText(cause.message));
   }
   return redactDebugText(parts.join(' '));
+}
+
+function isLocalDebugOrigin(origin){
+  if(!origin) return false;
+  try{
+    const host = new URL(origin).hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  }catch{
+    return false;
+  }
 }
 
 async function runAssess({ method, origin, body, env, log }){
@@ -74,7 +85,7 @@ async function runAssess({ method, origin, body, env, log }){
     return jsonResponse(503, { error: 'Speech service is not configured.', code: 'NOT_CONFIGURED' }, cors.origin);
   }
 
-  logger(`Assess wav bytes=${parsed.audio.length} textChars=${parsed.text.length} region-host=stt.speech.microsoft.com`);
+  logger(`Assess wav bytes=${parsed.audio.length} textChars=${parsed.text.length} region-host=stt.speech.microsoft.com EnableMiscue=true Granularity=Phoneme Prosody=${ENABLE_PROSODY_ASSESSMENT ? 'on' : 'off'}`);
 
   let azureResponse;
   try{
@@ -119,14 +130,21 @@ async function runAssess({ method, origin, body, env, log }){
     return jsonResponse(502, { error: 'Unable to analyze pronunciation.', code: 'ASSESS_FAILED' }, cors.origin);
   }
 
-  logger(`Assess ok, ${parsed.text.length} chars, words=${result.words.length}, prosody=${ENABLE_PROSODY_ASSESSMENT ? 'on' : 'off'}`);
+  const diagnostic = buildAssessmentDiagnostic(parsed.text, result, azureJson);
+  if(isLocalDebugOrigin(origin)){
+    logger('Assess diagnostic ' + JSON.stringify(diagnostic));
+  }else{
+    logger(`Assess ok, ${parsed.text.length} chars, words=${result.words.length}, recognizedChars=${result.recognizedText.length}, omissions=${result.issues.omissions.length}, insertions=${result.issues.insertions.length}, mispronunciations=${result.issues.mispronunciations.length}, prosody=${ENABLE_PROSODY_ASSESSMENT ? 'on' : 'off'}`);
+  }
 
   return jsonResponse(200, {
     scores: result.scores,
     displayScores: result.displayScores,
     recognizedText: result.recognizedText,
+    recognizedLexical: result.recognizedLexical,
     words: result.words,
     issues: result.issues,
+    diagnostic,
     prosody: result.prosody,
     lowAccuracyThreshold: result.lowAccuracyThreshold
   }, cors.origin);

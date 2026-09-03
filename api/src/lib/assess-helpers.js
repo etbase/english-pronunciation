@@ -22,8 +22,10 @@ function getAssessUrl(region){
 }
 
 function buildPronunciationAssessmentConfig(referenceText){
+  // 本專案走 Azure Speech REST short-audio API（Pronunciation-Assessment header），不是 Speech SDK。
+  // REST 文件欄位：ReferenceText、GradingSystem、Granularity、Dimension、EnableMiscue、PhonemeAlphabet。
   const params = {
-    ReferenceText: referenceText,
+    ReferenceText: String(referenceText || ''),
     GradingSystem: 'HundredMark',
     Granularity: 'Phoneme',
     Dimension: 'Comprehensive',
@@ -132,6 +134,9 @@ function validateAssessBody(body){
   const text = typeof body.text === 'string' ? body.text.trim() : '';
   if(!text){
     return { ok: false, error: 'text is required.' };
+  }
+  if(text === '[object Object]'){
+    return { ok: false, error: 'text must be the English reference sentence, not an object.' };
   }
   if(text.length > MAX_TEXT_LENGTH){
     return { ok: false, error: `text must be ${MAX_TEXT_LENGTH} characters or fewer.` };
@@ -293,6 +298,7 @@ function parseAssessmentResult(azureJson){
       completeness: displayScore(completeness)
     },
     recognizedText: String(azureJson.DisplayText || nbest.Display || ''),
+    recognizedLexical: String(nbest.Lexical || nbest.ITN || ''),
     words,
     issues: {
       mispronunciations,
@@ -303,6 +309,89 @@ function parseAssessmentResult(azureJson){
       enabled: ENABLE_PROSODY_ASSESSMENT
     },
     lowAccuracyThreshold: LOW_ACCURACY_THRESHOLD
+  };
+}
+
+function flattenPhonemes(words){
+  const list = [];
+  (words || []).forEach(word => {
+    (word.syllables || []).forEach(syl => {
+      (syl.phonemes || []).forEach(ph => list.push(ph));
+    });
+    (word.phonemes || []).forEach(ph => list.push(ph));
+  });
+  return list;
+}
+
+function normalizeEnglish(text){
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function countByErrorType(words, type){
+  return (words || []).filter(word => word.errorType === type).length;
+}
+
+function buildAssessmentDiagnostic(referenceText, parsed, azureJson){
+  const words = (parsed && parsed.words) || [];
+  const scores = (parsed && parsed.scores) || {};
+  const phonemes = flattenPhonemes(words);
+  const totalWords = words.length;
+  const lowAccuracyWords = words.filter(word => typeof word.accuracyScore === 'number' && word.accuracyScore < 60);
+  const veryLowAccuracyWords = words.filter(word => typeof word.accuracyScore === 'number' && word.accuracyScore < 40);
+  const lowAccuracyPhonemes = phonemes.filter(ph => typeof ph.accuracyScore === 'number' && ph.accuracyScore < 60);
+  const veryLowAccuracyPhonemes = phonemes.filter(ph => typeof ph.accuracyScore === 'number' && ph.accuracyScore < 40);
+  const nbest = azureJson && Array.isArray(azureJson.NBest) ? azureJson.NBest[0] : null;
+  const sampleWord = nbest && Array.isArray(nbest.Words) && nbest.Words[0] && typeof nbest.Words[0] === 'object'
+    ? nbest.Words[0]
+    : null;
+  const pron = asScore(scores.overall);
+  const completeness = asScore(scores.completeness);
+  const recognizedText = String((parsed && parsed.recognizedText) || '');
+  const recognizedLexical = String((parsed && parsed.recognizedLexical) || '');
+  const reference = String(referenceText || '');
+  const textMismatch = normalizeEnglish(reference) !== normalizeEnglish(recognizedText || recognizedLexical);
+
+  return {
+    referenceText: reference,
+    recognizedText,
+    recognizedLexical,
+    recognitionStatus: azureJson && azureJson.RecognitionStatus ? String(azureJson.RecognitionStatus) : '',
+    PronScore: pron,
+    AccuracyScore: asScore(scores.accuracy),
+    FluencyScore: asScore(scores.fluency),
+    CompletenessScore: completeness,
+    totalWords,
+    words: words.map(word => ({
+      word: word.word,
+      accuracyScore: word.accuracyScore,
+      errorType: word.errorType
+    })),
+    lowAccuracyWords: lowAccuracyWords.length,
+    veryLowAccuracyWords: veryLowAccuracyWords.length,
+    lowAccuracyRatio: totalWords ? lowAccuracyWords.length / totalWords : 0,
+    mispronunciationCount: countByErrorType(words, 'Mispronunciation'),
+    omissionCount: countByErrorType(words, 'Omission'),
+    insertionCount: countByErrorType(words, 'Insertion'),
+    totalPhonemes: phonemes.length,
+    lowAccuracyPhonemes: lowAccuracyPhonemes.length,
+    veryLowAccuracyPhonemes: veryLowAccuracyPhonemes.length,
+    lowPhonemeRatio: phonemes.length ? lowAccuracyPhonemes.length / phonemes.length : 0,
+    hasWordAccuracy: words.some(word => typeof word.accuracyScore === 'number'),
+    hasErrorType: words.some(word => !!word.errorType),
+    hasSyllableData: words.some(word => Array.isArray(word.syllables) && word.syllables.length > 0),
+    hasPhonemeData: phonemes.length > 0,
+    rawNBestKeys: nbest ? Object.keys(nbest) : [],
+    rawSampleWordKeys: sampleWord ? Object.keys(sampleWord) : [],
+    flags: {
+      highPronLowWordAccuracy: pron != null && pron > 90 && totalWords > 0 && (lowAccuracyWords.length / totalWords) >= 0.3,
+      highPronLowCompleteness: pron != null && pron > 90 && completeness != null && completeness < 70,
+      highPronMismatchedText: pron != null && pron > 90 && textMismatch,
+      highPronLowPhoneme: pron != null && pron > 90 && phonemes.length > 0 && (lowAccuracyPhonemes.length / phonemes.length) >= 0.3
+    }
   };
 }
 
@@ -317,5 +406,6 @@ module.exports = {
   validateWavPcm16kMono,
   validateAssessBody,
   parseAssessmentResult,
+  buildAssessmentDiagnostic,
   displayScore
 };

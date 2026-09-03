@@ -8,7 +8,8 @@ const {
   buildPronunciationAssessmentHeader,
   validateWavPcm16kMono,
   validateAssessBody,
-  parseAssessmentResult
+  parseAssessmentResult,
+  buildAssessmentDiagnostic
 } = require('./assess-helpers');
 
 function writeWavPcm16kMono(seconds, sampleValue = 0){
@@ -67,6 +68,7 @@ const parsed = parseAssessmentResult({
   DisplayText: 'Hello particularly extra.',
   NBest: [{
     Display: 'Hello particularly extra.',
+    Lexical: 'hello particularly extra',
     PronunciationAssessment: {
       AccuracyScore: 88.4,
       FluencyScore: 91.2,
@@ -131,6 +133,8 @@ const parsed = parseAssessmentResult({
 });
 
 assert.equal(parsed.ok, true);
+assert.equal(parsed.recognizedText, 'Hello particularly extra.');
+assert.equal(parsed.recognizedLexical, 'hello particularly extra');
 assert.equal(parsed.scores.overall, 86.6);
 assert.equal(parsed.scores.accuracy, 88.4);
 assert.equal(parsed.scores.fluency, 91.2);
@@ -170,6 +174,28 @@ assert.equal(restParsed.ok, true);
 assert.equal(restParsed.scores.overall, 97);
 assert.equal(restParsed.words[0].accuracyScore, 100);
 assert.equal(restParsed.words[0].syllables[0].phonemes[0].phoneme, 'h');
+
+const diagnostic = buildAssessmentDiagnostic('Hello world extra.', parsed, {
+  RecognitionStatus: 'Success',
+  NBest: [{
+    Display: 'Hello particularly extra.',
+    Lexical: 'hello particularly extra',
+    Words: [{ Word: 'hello' }]
+  }]
+});
+assert.equal(diagnostic.referenceText, 'Hello world extra.');
+assert.equal(diagnostic.recognizedText, 'Hello particularly extra.');
+assert.equal(diagnostic.totalWords, 4);
+assert.equal(diagnostic.mispronunciationCount, 1);
+assert.equal(diagnostic.omissionCount, 1);
+assert.equal(diagnostic.insertionCount, 1);
+assert.equal(diagnostic.lowAccuracyWords, 1);
+assert.equal(diagnostic.veryLowAccuracyWords, 0);
+assert.ok(diagnostic.totalPhonemes > 0);
+assert.equal(diagnostic.hasSyllableData, true);
+assert.equal(diagnostic.hasPhonemeData, true);
+assert.equal(diagnostic.hasErrorType, true);
+assert.equal(validateAssessBody({ text: '[object Object]', audioBase64: writeWavPcm16kMono(0.5).toString('base64') }).ok, false);
 
 assert.equal(parseAssessmentResult({ RecognitionStatus: 'NoMatch', NBest: [] }).ok, false);
 assert.equal(parseAssessmentResult({

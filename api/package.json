@@ -8,6 +8,7 @@
     "local": "node local-dev-server.js",
     "test": "node src/lib/tts-helpers.test.js && node src/lib/assess-helpers.test.js",
     "test:assess": "node src/lib/assess.local-e2e.test.js",
+    "test:assess-diagnostic": "node src/lib/assess.diagnostic.test.js",
     "test:live-assess": "node src/lib/assess.live.test.js && node src/lib/assess.route.test.js"
   },
   "engines": {

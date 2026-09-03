@@ -265,5 +265,10 @@ async function runPronunciationAssessment(text, recordingBlob, setStatus){
     CompletenessScore: payload.scores.completeness,
     wordCount: Array.isArray(payload.words) ? payload.words.length : 0
   });
+  if(payload.diagnostic){
+    assessDebug('diagnostic', payload.diagnostic);
+  }else{
+    assessDebug('recognizedText', payload.recognizedText || '');
+  }
   return payload;
 }
