@@ -13,6 +13,8 @@
       : 'https://etbase-pronunciation-tts.azurewebsites.net/api/tts',
     assessApiUrl: isLocal
       ? global.location.origin + '/api/assess'
-      : 'https://etbase-pronunciation-tts.azurewebsites.net/api/assess'
+      : 'https://etbase-pronunciation-tts.azurewebsites.net/api/assess',
+    // 自由練習英翻中。目前尚無正式 Translation Service，先留空，不要指向未建好的 API。
+    translateApiUrl: ''
   };
 })(window);

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260903-course2">
+  <link rel="stylesheet" href="css/style.css?v=20260903-course5">
   <script src="js/auth-mock.js?v=20260903-auth1"></script>
   <script src="js/auth-service.js?v=20260903-auth1"></script>
 </head>
@@ -38,6 +38,7 @@
   <textarea id="sentence" maxlength="200">I would like a cup of coffee
 and a bottle of water.</textarea>
   <div class="counter" id="counter">50 / 200</div>
+  <div class="practice-translation" id="practiceTranslation" hidden></div>
   <div class="practice-toolbar">
     <button type="button" id="slowToggle" class="slow-toggle" aria-pressed="false">
       <span class="turtle-icon" aria-hidden="true"></span>
@@ -122,13 +123,14 @@ and a bottle of water.</textarea>
 </section>
 </div>
 <footer>發音分數來自 Azure Speech Pronunciation Assessment。韻律自然度（Prosody）目前尚未啟用。</footer>
-<script src="js/config.js?v=20260903-course2"></script>
+<script src="js/config.js?v=20260903-course5"></script>
+<script src="js/translation-service.js?v=20260903-course5"></script>
 <script src="js/tts.js?v=20260903-course2"></script>
 <script src="js/folders.js?v=20260903-course2"></script>
 <script src="js/audio-player.js?v=20260903-course2"></script>
 <script src="js/wav.js?v=20260903-course2"></script>
 <script src="js/assess-ui.js?v=20260903-course2"></script>
-<script src="js/app.js?v=20260903-course2"></script>
+<script src="js/app.js?v=20260903-course5"></script>
 </main>
 <nav class="bottom-nav">
   <a class="bottom-nav-account" href="login.html" id="bottomAccountLink">
