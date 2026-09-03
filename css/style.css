@@ -348,9 +348,6 @@ button.course-sentence.selected{background:#ecf8f7;border-color:rgba(11,184,174,
   .button-row{gap:8px}
   .button-row button{min-height:64px;border-radius:14px;font-size:11px;gap:4px;padding:6px 2px}
   .button-row button img{width:20px;height:20px}
-  .course-practice-buttons{grid-template-columns:1fr;gap:12px;margin-top:20px}
-  .course-practice-panel .button-row button{min-height:72px;border-radius:16px;font-size:16px;gap:6px;padding:12px 16px}
-  .course-practice-panel .button-row button img{width:24px;height:24px}
   .voice-row{gap:6px;margin-bottom:14px}
   .voice-row > button.voice-btn{min-height:30px;height:30px;max-height:30px;font-size:13px;padding:0 4px}
   .metric{grid-template-columns:34px 1fr auto;grid-template-areas:"icon name value" "bar bar bar" "note note note";column-gap:10px;row-gap:8px;padding:14px 0}
