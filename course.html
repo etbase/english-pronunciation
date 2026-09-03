@@ -9,12 +9,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=20260903-course3">
+  <script src="js/auth-mock.js?v=20260903-auth1"></script>
+  <script src="js/auth-service.js?v=20260903-auth1"></script>
 </head>
 <body>
 <div class="app">
 <aside class="sidebar">
   <a class="account-icon" href="login.html" aria-label="我的帳戶"><img src="assets/icons/profile.svg" alt=""></a>
-  <script>(function(){try{var u=JSON.parse(localStorage.getItem('pronunciationUser')||'null');if(u&&u.name){var a=document.currentScript.previousElementSibling;a.href='profile.html';a.innerHTML='<span class="account-icon-initial">'+(u.name.trim().charAt(0)||'?').toUpperCase()+'</span>';}}catch(e){}})();</script>
+  <script>(function(){var u=window.Auth&&Auth.getCurrentUser();if(!u)return;var a=document.currentScript.previousElementSibling;a.href='profile.html';a.innerHTML=Auth.getAvatarMarkup(u);})();</script>
   <nav class="nav">
     <a href="course.html" class="active"><img src="assets/icons/course-book.svg" alt="">課程學習</a>
     <a href="index.html"><img src="assets/icons/home.svg" alt="">自由練習</a>

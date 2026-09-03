@@ -17,20 +17,27 @@ let renamingFolderId = null;
 const openFolderIds = new Set();
 
 function renderUser(user){
-  profileName.textContent = user.name;
-  avatarInitial.textContent = (user.name || '?').trim().charAt(0).toUpperCase();
+  profileName.textContent = user.displayName;
+  avatarInitial.textContent = (user.displayName || '?').trim().charAt(0).toUpperCase();
   profileEmail.textContent = user.email || '';
-  profileProvider.textContent = user.provider === 'google' ? 'Google（模擬）' : '模擬帳號';
-  profileJoined.textContent = user.loginAt || '--';
+  profileProvider.textContent = Auth.getProviderLabel(user);
+  profileJoined.textContent = user.createdAt || '--';
 }
 
-const user = JSON.parse(localStorage.getItem('pronunciationUser') || 'null');
-if(!user){
+if(!Auth.isAuthenticated()){
   location.href = 'login.html';
 }else{
-  renderUser(user);
+  renderUser(Auth.getCurrentUser());
   renderFolders();
 }
+
+Auth.onAuthStateChanged(next => {
+  if(!next){
+    location.href = 'login.html';
+    return;
+  }
+  renderUser(next);
+});
 
 editNameBtn.addEventListener('click', () => {
   nameInput.value = profileName.textContent;
@@ -42,20 +49,17 @@ cancelNameBtn.addEventListener('click', () => {
   editNameForm.style.display = 'none';
 });
 
-saveNameBtn.addEventListener('click', () => {
+saveNameBtn.addEventListener('click', async () => {
   const newName = nameInput.value.trim();
   if(!newName) return;
-  const current = JSON.parse(localStorage.getItem('pronunciationUser') || 'null');
+  const current = await Auth.updateProfile({ displayName: newName });
   if(!current) return;
-  current.name = newName;
-  localStorage.setItem('pronunciationUser', JSON.stringify(current));
   renderUser(current);
   editNameForm.style.display = 'none';
-  if(window.refreshAccountIcon) window.refreshAccountIcon();
 });
 
-logoutBtn.addEventListener('click', () => {
-  localStorage.removeItem('pronunciationUser');
+logoutBtn.addEventListener('click', async () => {
+  await Auth.signOut();
   location.href = 'login.html';
 });
 
