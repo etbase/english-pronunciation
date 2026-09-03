@@ -102,6 +102,7 @@
     analyzeBtn.disabled = true;
     speakBtn.disabled = !hasSentence();
     if(typeof resetAssessmentUi === 'function') resetAssessmentUi();
+    if(typeof Character !== 'undefined') Character.resetForNewPractice();
   }
 
   function setPracticeEnabled(on){
@@ -155,6 +156,7 @@
 
   speakBtn.addEventListener('click', async () => {
     if(!hasSentence()){ setStatus('請先從左側選擇一句。'); return; }
+    if(typeof Character !== 'undefined') Character.onPlaybackStarted();
     setStatus(`正在播放標準發音（${COURSE_VOICE_LABEL}）……`);
     const result = await speakStandardPronunciation(currentText, {
       rate: 1.0,
@@ -191,6 +193,7 @@
           stream.getTracks().forEach(t => t.stop());
           currentStream = null;
           analyzeBtn.disabled = true;
+          if(typeof Character !== 'undefined') Character.onRecordingEmpty();
           setStatus('這次沒有錄到聲音，請再按「開始錄音」。');
           return;
         }
@@ -209,8 +212,10 @@
       recordBtn.disabled = true;
       stopBtn.disabled = false;
       analyzeBtn.disabled = true;
+      if(typeof Character !== 'undefined') Character.onRecordingStarted();
       setStatus('錄音中……請跟著標準發音朗讀。');
     }catch(e){
+      if(typeof Character !== 'undefined') Character.onRecordingFailedToStart();
       setStatus('無法使用麥克風，請確認瀏覽器已允許麥克風權限。');
     }
   });
@@ -238,11 +243,15 @@
     }
 
     analyzeBtn.disabled = true;
+    if(typeof Character !== 'undefined') Character.onAnalyzeStarted();
     try{
       const payload = await runPronunciationAssessment(currentText, lastRecordingBlob, setStatus);
       renderAssessment(payload);
+      const overall = formatAzureScore((payload.displayScores || payload.scores || {}).overall);
+      if(typeof Character !== 'undefined') Character.onAnalyzeSuccess(overall);
       setStatus('分析完成。分數來自 Azure Pronunciation Assessment。');
     }catch(error){
+      if(typeof Character !== 'undefined') Character.onAnalyzeFailed();
       const message = error && error.message ? String(error.message) : '';
       assessDebug('client exception', { name: error && error.name, message });
       if(message === 'Failed to fetch' || message === 'Load failed' || message === 'NetworkError when attempting to fetch resource.'){
@@ -256,6 +265,7 @@
   });
 
   setPracticeEnabled(false);
+  if(typeof Character !== 'undefined') Character.init();
   window.setCoursePracticeSentence = setCoursePracticeSentence;
   window.clearCoursePracticeSentence = clearCoursePracticeSentence;
 })();

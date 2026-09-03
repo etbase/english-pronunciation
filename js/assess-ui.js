@@ -154,12 +154,6 @@ function renderAssessment(result){
   setMetricScore('fluency', scores.fluency);
   setMetricScore('completeness', scores.completeness);
 
-  const img = document.getElementById('characterImage');
-  if(img){
-    img.onerror = null;
-    img.src = overall >= 60 ? 'assets/characters/character-koala-happy.png' : 'assets/characters/character-koala-angry.png';
-  }
-
   const issues = result.issues || {};
   const mis = joinWords(issues.mispronunciations);
   const omitted = joinWords(issues.omissions);
@@ -201,14 +195,6 @@ function resetAssessmentUi(){
   const scoreMessage = document.getElementById('scoreMessage');
   if(scoreText) scoreText.textContent = '';
   if(scoreMessage) scoreMessage.textContent = '尚未分析，請先錄音並按下「分析發音」查看結果。';
-
-  const img = document.getElementById('characterImage');
-  if(img){
-    img.onerror = function(){
-      this.outerHTML = '<div class="character-missing">角色圖片預留區<br>character-koala-default.png</div>';
-    };
-    img.src = 'assets/characters/character-koala-default.png';
-  }
 
   const groups = document.getElementById('detailGroups');
   const tree = document.getElementById('wordTree');

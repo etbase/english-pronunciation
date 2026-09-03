@@ -1,10 +1,9 @@
-請把角色 PNG 放在這裡：
+請把角色圖片放在這裡：
 
-character-koala-default.png（預設角色）
-character-koala-happy.png（60 分以上）
-character-koala-angry.png（60 分以下）
-
-建議：
-- 透明背景 PNG
-- 原始尺寸至少 1000 × 1000 px
-- 網站顯示約 190～300 px
+character_ready.webp（預設 / 尚未錄音或分析失敗）
+character_listening.webp（開始錄音後，停止錄音後仍維持）
+character_speaking01.webp（第 1、3、5… 次按「播放發音」）
+character_speaking02.webp（第 2、4、6… 次按「播放發音」）
+character_thinking.webp（分析等待中）
+character_happy.webp（Overall / PronScore >= 80）
+character_sad.webp（Overall / PronScore < 80）

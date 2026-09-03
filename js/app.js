@@ -34,6 +34,15 @@ if(prefillSentence){
   history.replaceState(null, '', location.pathname);
 }
 
+let characterSentenceKey = sentence.value.trim();
+if(typeof Character !== 'undefined') Character.init();
+sentence.addEventListener('input', () => {
+  const next = sentence.value.trim();
+  if(next === characterSentenceKey) return;
+  characterSentenceKey = next;
+  if(typeof Character !== 'undefined') Character.resetForNewPractice();
+});
+
 // 資料夾收藏：圖示按下去會跳出小面板選資料夾，收藏後圖示會維持「按下去」的樣式，
 // 换句話或編輯句子後，圖示狀態也要跟著更新成目前這句話有沒有被收藏過。
 function refreshSaveFolderBtnState(){
@@ -90,6 +99,7 @@ if(voiceRow){
 speakBtn.addEventListener('click', async () => {
   const text = sentence.value.trim();
   if(!text){ setStatus('請先輸入英文句子。'); return; }
+  if(typeof Character !== 'undefined') Character.onPlaybackStarted();
   setStatus(`正在播放標準發音（${selectedVoiceLabel}）……`);
   const result = await speakStandardPronunciation(text, {
     rate: isSlowPlayback ? 0.5 : 1.0,
@@ -172,6 +182,7 @@ recordBtn.addEventListener('click', async () => {
       if(!lastRecordingBlob){
         stream.getTracks().forEach(t => t.stop());
         analyzeBtn.disabled = true;
+        if(typeof Character !== 'undefined') Character.onRecordingEmpty();
         setStatus('這次沒有錄到聲音，請再按「開始錄音」。');
         return;
       }
@@ -196,8 +207,10 @@ recordBtn.addEventListener('click', async () => {
     recordBtn.disabled = true;
     stopBtn.disabled = false;
     analyzeBtn.disabled = true;
+    if(typeof Character !== 'undefined') Character.onRecordingStarted();
     setStatus('錄音中……請跟著標準發音朗讀。');
   }catch(e){
+    if(typeof Character !== 'undefined') Character.onRecordingFailedToStart();
     setStatus('無法使用麥克風，請確認瀏覽器已允許麥克風權限。');
   }
 });
@@ -226,12 +239,16 @@ analyzeBtn.addEventListener('click', async () => {
   }
 
   analyzeBtn.disabled = true;
+  if(typeof Character !== 'undefined') Character.onAnalyzeStarted();
   try{
     const payload = await runPronunciationAssessment(text, lastRecordingBlob, setStatus);
     renderAssessment(payload);
+    const overall = formatAzureScore((payload.displayScores || payload.scores || {}).overall);
+    if(typeof Character !== 'undefined') Character.onAnalyzeSuccess(overall);
     updateHistoryScore(text, payload.displayScores || payload.scores);
     setStatus('分析完成。分數來自 Azure Pronunciation Assessment。');
   }catch(error){
+    if(typeof Character !== 'undefined') Character.onAnalyzeFailed();
     const message = error && error.message ? String(error.message) : '';
     assessDebug('client exception', { name: error && error.name, message });
     if(message === 'Failed to fetch' || message === 'Load failed' || message === 'NetworkError when attempting to fetch resource.'){

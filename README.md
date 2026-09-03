@@ -196,7 +196,7 @@ https://YOUR-FUNCTION-APP.azurewebsites.net/api/tts
 
 ### v2
 - `stop.svg`、`analysis.svg` 圖示改為白色，適合放在按鈕內
-- 新增角色圖片支援：`character-koala-default.png`（預設）／`character-koala-happy.png`（≥60 分）／`character-koala-angry.png`（<60 分），放置於 `assets/characters/`
+- 分析結果角色使用 `assets/characters/` 的 7 張狀態圖：ready、listening、speaking01、speaking02、thinking、happy、sad（Overall / PronScore >= 80 為 happy）
 - 「錄音暫存」功能改為「下載音檔」
 - 歷史紀錄自動保存最近 5 筆
 - 新增六個分析項目圖示：`metric-accuracy.svg`（發音準確度）、`metric-stress.svg`（重音）、`metric-rhythm.svg`（節奏）、`metric-connected-speech.svg`（連音）、`metric-elision.svg`（省音）、`metric-fluency.svg`（流暢度）
