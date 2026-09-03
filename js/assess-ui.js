@@ -149,7 +149,7 @@ function renderAssessment(result){
   }
 
   document.getElementById('overall').textContent = String(overall);
-  document.getElementById('scoreRing').style.background = `conic-gradient(var(--teal) 0 ${overall}%, #ecf8f7 ${overall}% 100%)`;
+  document.getElementById('scoreRing').style.background = `conic-gradient(var(--teal) 0 ${overall}%, var(--mint) ${overall}% 100%)`;
   setMetricScore('accuracy', scores.accuracy);
   setMetricScore('fluency', scores.fluency);
   setMetricScore('completeness', scores.completeness);
