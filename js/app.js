@@ -26,46 +26,6 @@ function updateCounter(){ counter.textContent = `${sentence.value.length} / 200`
 sentence.addEventListener('input', updateCounter);
 updateCounter();
 
-const practiceTranslation = document.getElementById('practiceTranslation');
-function englishSourceText(){
-  return sentence.value.trim();
-}
-function renderPracticeTranslation(state){
-  if(!practiceTranslation || typeof Translation === 'undefined') return;
-  const source = englishSourceText();
-  const current = state || Translation.getCurrent();
-  if(!source){
-    practiceTranslation.hidden = true;
-    practiceTranslation.textContent = '';
-    return;
-  }
-  practiceTranslation.hidden = false;
-  if(current.sourceText !== source){
-    practiceTranslation.textContent = '';
-    return;
-  }
-  if(current.translatedText){
-    practiceTranslation.textContent = current.translatedText;
-    return;
-  }
-  if(current.status === 'loading' || current.status === 'pending'){
-    practiceTranslation.textContent = '翻譯中…';
-    return;
-  }
-  if(current.status === 'error'){
-    practiceTranslation.textContent = '暫時無法取得翻譯';
-    return;
-  }
-  practiceTranslation.textContent = '中文翻譯尚未提供';
-}
-function syncPracticeTranslation(){
-  if(typeof Translation === 'undefined') return;
-  Translation.translateDebounced(englishSourceText());
-}
-if(typeof Translation !== 'undefined'){
-  Translation.onChange(renderPracticeTranslation);
-}
-
 // 從歷史紀錄按「重新練習」跳過來時，網址會帶 ?sentence=...，載入後直接帶入句子。
 const prefillSentence = new URLSearchParams(location.search).get('sentence');
 if(prefillSentence){
@@ -73,9 +33,6 @@ if(prefillSentence){
   updateCounter();
   history.replaceState(null, '', location.pathname);
 }
-
-sentence.addEventListener('input', syncPracticeTranslation);
-syncPracticeTranslation();
 
 // 資料夾收藏：圖示按下去會跳出小面板選資料夾，收藏後圖示會維持「按下去」的樣式，
 // 换句話或編輯句子後，圖示狀態也要跟著更新成目前這句話有沒有被收藏過。
