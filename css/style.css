@@ -49,6 +49,8 @@ body{margin:0;font-family:"Noto Sans TC",-apple-system,BlinkMacSystemFont,"Segoe
 .help-link img{width:18px;height:18px;filter:var(--icon-tint)}
 main{margin-left:150px;padding:30px 38px 28px;max-width:1320px}
 .header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:26px}
+.title{min-width:0;max-width:100%}
+.title-logo{display:block;width:460px;max-width:100%;height:auto}
 .title h1{margin:0;font-size:38px;letter-spacing:.2px;line-height:1.05;font-weight:900}
 .title h2{margin:4px 0 8px;font-size:28px;line-height:1.1;color:var(--teal-dark);font-weight:900}
 .subtitle{color:var(--muted);font-size:15px;font-weight:700}
