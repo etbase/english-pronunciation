@@ -107,7 +107,7 @@
       btn.addEventListener('click', () => {
         setSelectedSentence(sentence.id);
         if(typeof setCoursePracticeSentence === 'function'){
-          setCoursePracticeSentence(sentence.text);
+          setCoursePracticeSentence(sentence);
         }
       });
       sentenceList.appendChild(btn);

@@ -6,6 +6,7 @@
 
   const panelCol = document.getElementById('coursePracticeCol');
   const sentenceEl = document.getElementById('coursePracticeText');
+  const translationEl = document.getElementById('coursePracticeTranslation');
   const speakBtn = document.getElementById('speakBtn');
   const recordBtn = document.getElementById('recordBtn');
   const stopBtn = document.getElementById('stopBtn');
@@ -114,9 +115,23 @@
     panelCol.classList.add('is-open');
   }
 
-  function setCoursePracticeSentence(text){
-    currentText = (text || '').trim();
+  function setTranslation(text){
+    if(!translationEl) return;
+    const translation = (text || '').trim();
+    translationEl.textContent = translation;
+    translationEl.hidden = !translation;
+  }
+
+  function setCoursePracticeSentence(sentence){
+    const english = typeof sentence === 'string'
+      ? sentence
+      : (sentence && sentence.text) || '';
+    const translation = typeof sentence === 'string'
+      ? ''
+      : (sentence && sentence.translation) || '';
+    currentText = english.trim();
     sentenceEl.textContent = currentText || '請從左側選擇一句開始練習。';
+    setTranslation(currentText ? translation : '');
     openPracticePanel();
     resetPracticeSession();
     if(currentText){
@@ -132,6 +147,7 @@
     panelCol.classList.remove('is-open');
     currentText = '';
     sentenceEl.textContent = '請從左側選擇一句開始練習。';
+    setTranslation('');
     resetPracticeSession();
     setPracticeEnabled(false);
     setStatus('請先從左側選擇一句，再播放標準發音或開始錄音。');
