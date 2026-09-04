@@ -9,7 +9,8 @@ const {
   validateWavPcm16kMono,
   validateAssessBody,
   parseAssessmentResult,
-  buildAssessmentDiagnostic
+  buildAssessmentDiagnostic,
+  computeCustomOverall
 } = require('./assess-helpers');
 
 function writeWavPcm16kMono(seconds, sampleValue = 0){
@@ -139,7 +140,14 @@ assert.equal(parsed.scores.overall, 86.6);
 assert.equal(parsed.scores.accuracy, 88.4);
 assert.equal(parsed.scores.fluency, 91.2);
 assert.equal(parsed.scores.completeness, 80);
-assert.equal(parsed.displayScores.overall, 87);
+assert.equal(parsed.displayScores.overall, 73);
+assert.equal(parsed.displayScores.accuracy, 88);
+assert.equal(parsed.displayScores.fluency, 91);
+assert.equal(parsed.displayScores.completeness, 80);
+assert.equal(parsed.overallDebug.azurePronScore, 86.6);
+assert.equal(parsed.overallDebug.weakWordScore, 42);
+assert.equal(parsed.overallDebug.weakPhonemeScore, 38);
+assert.equal(parsed.overallDebug.displayOverall, 73);
 assert.equal(parsed.prosody.enabled, false);
 assert.equal('prosodyScore' in parsed.scores, false);
 assert.equal(parsed.issues.mispronunciations[0].word, 'particularly');
@@ -172,6 +180,8 @@ const restParsed = parseAssessmentResult({
 });
 assert.equal(restParsed.ok, true);
 assert.equal(restParsed.scores.overall, 97);
+assert.equal(restParsed.displayScores.overall, 98);
+assert.equal(restParsed.displayScores.accuracy, 100);
 assert.equal(restParsed.words[0].accuracyScore, 100);
 assert.equal(restParsed.words[0].syllables[0].phonemes[0].phoneme, 'h');
 
@@ -202,5 +212,34 @@ assert.equal(parseAssessmentResult({
   RecognitionStatus: 'Success',
   NBest: [{ PronunciationAssessment: { AccuracyScore: 90, FluencyScore: 90, CompletenessScore: 90 } }]
 }).ok, false);
+
+const tenWords = computeCustomOverall(90, [
+  { word: 'a', accuracyScore: 10 },
+  { word: 'b', accuracyScore: 20 },
+  { word: 'c', accuracyScore: 30 },
+  { word: 'd', accuracyScore: 40 },
+  { word: 'e', accuracyScore: 50 },
+  { word: 'f', accuracyScore: 60 },
+  { word: 'g', accuracyScore: 70 },
+  { word: 'h', accuracyScore: 80 },
+  { word: 'i', accuracyScore: 90 },
+  { word: 'j', accuracyScore: 100 }
+], 90, 90, 90);
+assert.equal(tenWords.weakest20PercentWords.length, 2);
+assert.equal(tenWords.weakWordScore, 15);
+assert.equal(tenWords.weakPhonemeScore, 15);
+
+const noDetails = computeCustomOverall(88.4, [], 90, 91, 92);
+assert.equal(noDetails.weakWordScore, 88.4);
+assert.equal(noDetails.weakPhonemeScore, 88.4);
+assert.equal(noDetails.displayOverall, 88);
+
+const threeWords = computeCustomOverall(80, [
+  { word: 'one', accuracyScore: 40 },
+  { word: 'two', accuracyScore: 80 },
+  { word: 'three', accuracyScore: 100 }
+], 80, 80, 80);
+assert.equal(threeWords.weakest20PercentWords.length, 1);
+assert.equal(threeWords.weakWordScore, 40);
 
 console.log('assess-helpers tests passed');

@@ -238,6 +238,71 @@ function collectWord(wordNode){
   };
 }
 
+function isFiniteScore(value){
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function phonemesWithWord(words){
+  const list = [];
+  (words || []).forEach(word => {
+    const name = word && word.word ? String(word.word) : '';
+    const push = (ph) => {
+      if(!ph) return;
+      list.push({
+        phoneme: String(ph.phoneme || ''),
+        word: name,
+        score: asScore(ph.accuracyScore)
+      });
+    };
+    (word.syllables || []).forEach(syl => (syl.phonemes || []).forEach(push));
+    (word.phonemes || []).forEach(push);
+  });
+  return list;
+}
+
+function weakestAverage(items, getScore){
+  const valid = (items || []).filter(item => isFiniteScore(getScore(item)));
+  if(!valid.length){
+    return { valid: [], weakest: [], average: null };
+  }
+  const sorted = valid.slice().sort((a, b) => getScore(a) - getScore(b));
+  const count = Math.max(1, Math.ceil(sorted.length * 0.2));
+  const weakest = sorted.slice(0, count);
+  const average = weakest.reduce((sum, item) => sum + getScore(item), 0) / weakest.length;
+  return { valid, weakest, average };
+}
+
+function computeCustomOverall(pronScore, words, accuracy, fluency, completeness){
+  const pron = asScore(pronScore);
+  if(pron == null) return null;
+
+  const wordItems = (words || []).map(word => ({
+    word: String(word && word.word || ''),
+    score: asScore(word && word.accuracyScore)
+  }));
+  const wordSlice = weakestAverage(wordItems, item => item.score);
+  const weakWordScore = wordSlice.average == null ? pron : wordSlice.average;
+
+  const phonemeSlice = weakestAverage(phonemesWithWord(words), item => item.score);
+  const weakPhonemeScore = phonemeSlice.average == null ? weakWordScore : phonemeSlice.average;
+
+  const customOverall = pron * 0.7 + weakWordScore * 0.2 + weakPhonemeScore * 0.1;
+  return {
+    azurePronScore: pron,
+    accuracyScore: asScore(accuracy),
+    fluencyScore: asScore(fluency),
+    completenessScore: asScore(completeness),
+    wordScores: wordSlice.valid.map(item => ({ word: item.word, score: item.score })),
+    weakest20PercentWords: wordSlice.weakest.map(item => ({ word: item.word, score: item.score })),
+    weakWordScore,
+    phonemeScores: phonemeSlice.valid.map(item => ({ phoneme: item.phoneme, word: item.word, score: item.score })),
+    weakest20PercentPhonemes: phonemeSlice.weakest.map(item => ({ phoneme: item.phoneme, word: item.word, score: item.score })),
+    weakPhonemeScore,
+    customOverall,
+    displayOverall: Math.round(customOverall)
+  };
+}
+
 function isSuccessStatus(status){
   return status === 'Success' || status === 0 || status === '0';
 }
@@ -283,6 +348,8 @@ function parseAssessmentResult(azureJson){
     }
   });
 
+  const overallDebug = computeCustomOverall(overall, words, accuracy, fluency, completeness);
+
   return {
     ok: true,
     scores: {
@@ -292,11 +359,12 @@ function parseAssessmentResult(azureJson){
       completeness
     },
     displayScores: {
-      overall: displayScore(overall),
+      overall: overallDebug.displayOverall,
       accuracy: displayScore(accuracy),
       fluency: displayScore(fluency),
       completeness: displayScore(completeness)
     },
+    overallDebug,
     recognizedText: String(azureJson.DisplayText || nbest.Display || ''),
     recognizedLexical: String(nbest.Lexical || nbest.ITN || ''),
     words,
@@ -391,7 +459,8 @@ function buildAssessmentDiagnostic(referenceText, parsed, azureJson){
       highPronLowCompleteness: pron != null && pron > 90 && completeness != null && completeness < 70,
       highPronMismatchedText: pron != null && pron > 90 && textMismatch,
       highPronLowPhoneme: pron != null && pron > 90 && phonemes.length > 0 && (lowAccuracyPhonemes.length / phonemes.length) >= 0.3
-    }
+    },
+    overallDebug: parsed && parsed.overallDebug ? parsed.overallDebug : null
   };
 }
 
@@ -407,5 +476,6 @@ module.exports = {
   validateAssessBody,
   parseAssessmentResult,
   buildAssessmentDiagnostic,
+  computeCustomOverall,
   displayScore
 };

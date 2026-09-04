@@ -145,6 +145,7 @@ async function runAssess({ method, origin, body, env, log }){
     words: result.words,
     issues: result.issues,
     diagnostic,
+    overallDebug: result.overallDebug,
     prosody: result.prosody,
     lowAccuracyThreshold: result.lowAccuracyThreshold
   }, cors.origin);

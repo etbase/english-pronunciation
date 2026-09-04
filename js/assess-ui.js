@@ -270,5 +270,8 @@ async function runPronunciationAssessment(text, recordingBlob, setStatus){
   }else{
     assessDebug('recognizedText', payload.recognizedText || '');
   }
+  if(payload.overallDebug){
+    assessDebug('overall', payload.overallDebug);
+  }
   return payload;
 }
