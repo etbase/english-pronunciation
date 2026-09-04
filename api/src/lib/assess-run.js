@@ -121,7 +121,7 @@ async function runAssess({ method, origin, body, env, log }){
     return jsonResponse(502, { error: 'Unable to analyze pronunciation.', code: 'ASSESS_FAILED' }, cors.origin);
   }
 
-  const result = parseAssessmentResult(azureJson);
+  const result = parseAssessmentResult(azureJson, { audioSeconds: parsed.seconds });
   if(!result.ok){
     if(result.error === 'NO_SPEECH'){
       return jsonResponse(422, { error: 'No clear English speech was recognized. Please record again.', code: 'NO_SPEECH' }, cors.origin);

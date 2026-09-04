@@ -154,7 +154,7 @@ function validateAssessBody(body){
     return wav;
   }
 
-  return { ok: true, text, audio: wav.buffer };
+  return { ok: true, text, audio: wav.buffer, seconds: wav.seconds };
 }
 
 function asScore(value){
@@ -272,34 +272,136 @@ function weakestAverage(items, getScore){
   return { valid, weakest, average };
 }
 
-function computeCustomOverall(pronScore, words, accuracy, fluency, completeness){
+const TICKS_PER_MS = 10000;
+const FLUENCY_ALLOWED_GAP_MS = 250;
+const FLUENCY_LONG_PAUSE_MS = 800;
+const FLUENCY_EDGE_GRACE_MS = 1500;
+
+function ticksToMs(ticks){
+  if(!isFiniteScore(ticks)) return null;
+  return ticks / TICKS_PER_MS;
+}
+
+function spokenWordsForFluency(words){
+  return (words || []).filter(word => {
+    if(!word || word.errorType === 'Omission') return false;
+    return ticksToMs(word.offset) != null && ticksToMs(word.duration) != null && word.duration > 0;
+  }).slice().sort((a, b) => a.offset - b.offset);
+}
+
+function excessPauseMs(gapMs){
+  if(!isFiniteScore(gapMs) || gapMs <= FLUENCY_ALLOWED_GAP_MS) return 0;
+  let excess = gapMs - FLUENCY_ALLOWED_GAP_MS;
+  if(gapMs > FLUENCY_LONG_PAUSE_MS){
+    excess += (gapMs - FLUENCY_LONG_PAUSE_MS);
+  }
+  return excess;
+}
+
+function computePauseFluency(words, azureFluency, audioSeconds){
+  const azure = asScore(azureFluency);
+  const spoken = spokenWordsForFluency(words);
+  const pauses = [];
+  let speechMs = 0;
+  let excessMs = 0;
+
+  spoken.forEach(word => {
+    speechMs += ticksToMs(word.duration);
+  });
+
+  for(let i = 0; i < spoken.length - 1; i++){
+    const current = spoken[i];
+    const next = spoken[i + 1];
+    const gapMs = Math.max(0, ticksToMs(next.offset) - (ticksToMs(current.offset) + ticksToMs(current.duration)));
+    const excess = excessPauseMs(gapMs);
+    excessMs += excess;
+    pauses.push({
+      afterWord: current.word,
+      beforeWord: next.word,
+      gapMs: Math.round(gapMs),
+      excessMs: Math.round(excess)
+    });
+  }
+
+  if(isFiniteScore(audioSeconds) && audioSeconds > 0 && spoken.length){
+    const audioMs = audioSeconds * 1000;
+    const firstStart = ticksToMs(spoken[0].offset);
+    const last = spoken[spoken.length - 1];
+    const lastEnd = ticksToMs(last.offset) + ticksToMs(last.duration);
+    const leadingExcess = Math.max(0, firstStart - FLUENCY_EDGE_GRACE_MS);
+    const trailingExcess = Math.max(0, audioMs - lastEnd - FLUENCY_EDGE_GRACE_MS);
+    excessMs += leadingExcess + trailingExcess;
+    if(leadingExcess > 0){
+      pauses.push({ afterWord: '', beforeWord: spoken[0].word, gapMs: Math.round(firstStart), excessMs: Math.round(leadingExcess), edge: 'leading' });
+    }
+    if(trailingExcess > 0){
+      pauses.push({ afterWord: last.word, beforeWord: '', gapMs: Math.round(Math.max(0, audioMs - lastEnd)), excessMs: Math.round(trailingExcess), edge: 'trailing' });
+    }
+  }
+
+  const canMeasure = speechMs > 0 && (pauses.length > 0 || excessMs > 0);
+  const pauseFluency = canMeasure ? (100 * speechMs / (speechMs + excessMs)) : azure;
+  const longPauseCount = pauses.filter(item => item.gapMs >= FLUENCY_LONG_PAUSE_MS).length;
+  return {
+    azureFluencyScore: azure,
+    pauseFluency: asScore(pauseFluency),
+    speechMs: Math.round(speechMs),
+    excessPauseMs: Math.round(excessMs),
+    longPauseCount,
+    pauses,
+    customFluency: azure == null ? null : Math.min(azure, azure * 0.4 + pauseFluency * 0.6)
+  };
+}
+
+function computeCustomOverall(pronScore, words, accuracy, fluency, completeness, audioSeconds){
   const pron = asScore(pronScore);
   if(pron == null) return null;
+
+  const azureAccuracy = asScore(accuracy);
+  const azureFluency = asScore(fluency);
+  const azureCompleteness = asScore(completeness);
 
   const wordItems = (words || []).map(word => ({
     word: String(word && word.word || ''),
     score: asScore(word && word.accuracyScore)
   }));
   const wordSlice = weakestAverage(wordItems, item => item.score);
-  const weakWordScore = wordSlice.average == null ? pron : wordSlice.average;
-
   const phonemeSlice = weakestAverage(phonemesWithWord(words), item => item.score);
-  const weakPhonemeScore = phonemeSlice.average == null ? weakWordScore : phonemeSlice.average;
 
-  const customOverall = pron * 0.7 + weakWordScore * 0.2 + weakPhonemeScore * 0.1;
+  const overallWeakWordScore = wordSlice.average == null ? pron : wordSlice.average;
+  const overallWeakPhonemeScore = phonemeSlice.average == null ? overallWeakWordScore : phonemeSlice.average;
+  const customOverall = pron * 0.7 + overallWeakWordScore * 0.2 + overallWeakPhonemeScore * 0.1;
+
+  const accuracyWeakWordScore = wordSlice.average == null ? azureAccuracy : wordSlice.average;
+  const accuracyWeakPhonemeScore = phonemeSlice.average == null ? accuracyWeakWordScore : phonemeSlice.average;
+  const customAccuracy = azureAccuracy == null
+    ? null
+    : Math.min(azureAccuracy, azureAccuracy * 0.4 + accuracyWeakWordScore * 0.4 + accuracyWeakPhonemeScore * 0.2);
+
+  const fluencyDebug = computePauseFluency(words, azureFluency, audioSeconds);
+  const customFluency = fluencyDebug.customFluency;
+
   return {
     azurePronScore: pron,
-    accuracyScore: asScore(accuracy),
-    fluencyScore: asScore(fluency),
-    completenessScore: asScore(completeness),
+    accuracyScore: azureAccuracy,
+    fluencyScore: azureFluency,
+    completenessScore: azureCompleteness,
     wordScores: wordSlice.valid.map(item => ({ word: item.word, score: item.score })),
     weakest20PercentWords: wordSlice.weakest.map(item => ({ word: item.word, score: item.score })),
-    weakWordScore,
+    weakWordScore: overallWeakWordScore,
     phonemeScores: phonemeSlice.valid.map(item => ({ phoneme: item.phoneme, word: item.word, score: item.score })),
     weakest20PercentPhonemes: phonemeSlice.weakest.map(item => ({ phoneme: item.phoneme, word: item.word, score: item.score })),
-    weakPhonemeScore,
+    weakPhonemeScore: overallWeakPhonemeScore,
     customOverall,
-    displayOverall: Math.round(customOverall)
+    displayOverall: Math.round(customOverall),
+    customAccuracy,
+    displayAccuracy: customAccuracy == null ? null : Math.round(customAccuracy),
+    pauseFluency: fluencyDebug.pauseFluency,
+    excessPauseMs: fluencyDebug.excessPauseMs,
+    longPauseCount: fluencyDebug.longPauseCount,
+    pauses: fluencyDebug.pauses,
+    customFluency,
+    displayFluency: customFluency == null ? null : Math.round(customFluency)
   };
 }
 
@@ -307,7 +409,7 @@ function isSuccessStatus(status){
   return status === 'Success' || status === 0 || status === '0';
 }
 
-function parseAssessmentResult(azureJson){
+function parseAssessmentResult(azureJson, options){
   if(!azureJson || typeof azureJson !== 'object'){
     return { ok: false, error: 'Azure response is missing assessment data.' };
   }
@@ -348,7 +450,14 @@ function parseAssessmentResult(azureJson){
     }
   });
 
-  const overallDebug = computeCustomOverall(overall, words, accuracy, fluency, completeness);
+  const overallDebug = computeCustomOverall(
+    overall,
+    words,
+    accuracy,
+    fluency,
+    completeness,
+    options && options.audioSeconds
+  );
 
   return {
     ok: true,
@@ -360,8 +469,8 @@ function parseAssessmentResult(azureJson){
     },
     displayScores: {
       overall: overallDebug.displayOverall,
-      accuracy: displayScore(accuracy),
-      fluency: displayScore(fluency),
+      accuracy: overallDebug.displayAccuracy,
+      fluency: overallDebug.displayFluency,
       completeness: displayScore(completeness)
     },
     overallDebug,

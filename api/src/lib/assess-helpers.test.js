@@ -141,13 +141,15 @@ assert.equal(parsed.scores.accuracy, 88.4);
 assert.equal(parsed.scores.fluency, 91.2);
 assert.equal(parsed.scores.completeness, 80);
 assert.equal(parsed.displayScores.overall, 73);
-assert.equal(parsed.displayScores.accuracy, 88);
+assert.equal(parsed.displayScores.accuracy, 60);
 assert.equal(parsed.displayScores.fluency, 91);
 assert.equal(parsed.displayScores.completeness, 80);
 assert.equal(parsed.overallDebug.azurePronScore, 86.6);
 assert.equal(parsed.overallDebug.weakWordScore, 42);
 assert.equal(parsed.overallDebug.weakPhonemeScore, 38);
 assert.equal(parsed.overallDebug.displayOverall, 73);
+assert.equal(parsed.overallDebug.displayAccuracy, 60);
+assert.equal(parsed.overallDebug.displayFluency, 91);
 assert.equal(parsed.prosody.enabled, false);
 assert.equal('prosodyScore' in parsed.scores, false);
 assert.equal(parsed.issues.mispronunciations[0].word, 'particularly');
@@ -182,6 +184,7 @@ assert.equal(restParsed.ok, true);
 assert.equal(restParsed.scores.overall, 97);
 assert.equal(restParsed.displayScores.overall, 98);
 assert.equal(restParsed.displayScores.accuracy, 100);
+assert.equal(restParsed.displayScores.fluency, 99);
 assert.equal(restParsed.words[0].accuracyScore, 100);
 assert.equal(restParsed.words[0].syllables[0].phonemes[0].phoneme, 'h');
 
@@ -241,5 +244,27 @@ const threeWords = computeCustomOverall(80, [
 ], 80, 80, 80);
 assert.equal(threeWords.weakest20PercentWords.length, 1);
 assert.equal(threeWords.weakWordScore, 40);
+assert.equal(threeWords.displayAccuracy, 56);
+
+const smoothFluency = computeCustomOverall(90, [
+  { word: 'hello', accuracyScore: 90, offset: 0, duration: 4000000, errorType: 'None' },
+  { word: 'world', accuracyScore: 90, offset: 5000000, duration: 4000000, errorType: 'None' }
+], 90, 95, 100);
+assert.equal(smoothFluency.displayFluency, 95);
+
+const stalledFluency = computeCustomOverall(90, [
+  { word: 'hello', accuracyScore: 90, offset: 0, duration: 3000000, errorType: 'None' },
+  { word: 'world', accuracyScore: 90, offset: 23000000, duration: 3000000, errorType: 'None' }
+], 90, 95, 100);
+assert.ok(stalledFluency.displayFluency < 95);
+assert.ok(stalledFluency.longPauseCount >= 1);
+assert.ok(stalledFluency.excessPauseMs > 1000);
+
+const omittedDoesNotCreatePause = computeCustomOverall(90, [
+  { word: 'hello', accuracyScore: 90, offset: 0, duration: 3000000, errorType: 'None' },
+  { word: 'missing', errorType: 'Omission' },
+  { word: 'world', accuracyScore: 90, offset: 4000000, duration: 3000000, errorType: 'None' }
+], 90, 92, 70);
+assert.equal(omittedDoesNotCreatePause.displayFluency, 92);
 
 console.log('assess-helpers tests passed');
