@@ -102,6 +102,52 @@
     return '<span class="account-icon-initial">' + initial + '</span>';
   }
 
+  const AVATAR_CACHE_KEY = 'pronunciationAccountAvatar';
+
+  function readAvatarCache(){
+    try{
+      const raw = JSON.parse(global.sessionStorage.getItem(AVATAR_CACHE_KEY) || 'null');
+      if(!raw || typeof raw !== 'object') return null;
+      if(raw.signedOut) return { signedOut: true };
+      return {
+        uid: raw.uid ? String(raw.uid) : '',
+        displayName: raw.displayName ? String(raw.displayName) : '',
+        photoURL: raw.photoURL ? String(raw.photoURL) : null
+      };
+    }catch(e){
+      return null;
+    }
+  }
+
+  function writeAvatarCache(user){
+    try{
+      if(!user){
+        global.sessionStorage.setItem(AVATAR_CACHE_KEY, JSON.stringify({ signedOut: true }));
+        return;
+      }
+      global.sessionStorage.setItem(AVATAR_CACHE_KEY, JSON.stringify({
+        uid: user.uid || '',
+        displayName: user.displayName || '',
+        photoURL: user.photoURL || null
+      }));
+    }catch(e){ /* sessionStorage 不可用時略過快取 */ }
+  }
+
+  function paintCachedAvatar(el){
+    if(!el) return false;
+    const cached = readAvatarCache();
+    if(!cached) return false;
+    el.classList.remove('is-auth-pending');
+    if(cached.signedOut){
+      if(el.tagName === 'A') el.href = 'login.html';
+      el.innerHTML = getAvatarMarkup(null);
+      return true;
+    }
+    if(el.tagName === 'A') el.href = 'profile.html';
+    el.innerHTML = getAvatarMarkup(cached);
+    return true;
+  }
+
   if(backend() && typeof backend().subscribe === 'function'){
     backend().subscribe(function(user){
       notify(user);
@@ -120,6 +166,9 @@
     authHeaders: authHeaders,
     isFirebase: isFirebase,
     getProviderLabel: getProviderLabel,
-    getAvatarMarkup: getAvatarMarkup
+    getAvatarMarkup: getAvatarMarkup,
+    readAvatarCache: readAvatarCache,
+    writeAvatarCache: writeAvatarCache,
+    paintCachedAvatar: paintCachedAvatar
   };
 })(window);
