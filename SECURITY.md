@@ -36,9 +36,9 @@ git config core.hooksPath .githooks
 
 ## 3. Firebase 安全規則（Phase 1 開始時使用）
 
-`firebase/firestore.rules` 跟 `firebase/storage.rules` 是先寫好的規則範本，核心原則是：
+`firebase/firestore.rules` 跟 `firebase/storage.rules` 是規則範本。Firestore 目前建議：已登入者只能讀自己的 `users/{uid}`，不能從前端改 `plan`。請在 Firebase Console 自行發布，不要設成公開讀寫。
 
-> **每個使用者只能讀寫「自己名下」的資料，其他人的資料一律不能碰，沒有明確允許的路徑，預設全部拒絕。**
+> **已登入使用者只能讀自己的 `users/{uid}`，不能從前端改 `plan`，也不能讀其他人的資料。沒有明確允許的路徑，預設全部拒絕。**
 
 這是為了避免開發時常見的錯誤：先用「測試模式」（完全開放讀寫）方便開發，正式上線忘記關掉，導致任何人都能讀取、竄改甚至刪除所有使用者的資料。正式導入 Firebase 時，記得把這兩份規則部署上去，不要一直停留在測試模式。
 

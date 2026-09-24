@@ -26,6 +26,28 @@ function renderUser(user){
   profileJoined.textContent = user.createdAt || '--';
 }
 
+function renderPlan(membership){
+  const el = document.getElementById('profilePlan');
+  if(!el) return;
+  el.classList.remove('plan-badge-loading', 'plan-badge-error');
+  if(!membership || membership.status === 'loading'){
+    el.classList.add('plan-badge-loading');
+    el.textContent = '讀取中…';
+    return;
+  }
+  if(membership.status === 'error'){
+    el.classList.add('plan-badge-error');
+    el.textContent = '無法讀取方案';
+    return;
+  }
+  if(membership.plan !== 'free' && membership.plan !== 'vip'){
+    el.classList.add('plan-badge-loading');
+    el.textContent = '讀取中…';
+    return;
+  }
+  el.textContent = membership.plan === 'vip' ? 'VIP' : '免費版';
+}
+
 Auth.whenReady().then(function(){
   if(!Auth.isAuthenticated()){
     location.href = 'login.html';
@@ -48,6 +70,10 @@ Auth.onAuthStateChanged(next => {
   }
   renderUser(next);
 });
+
+if(window.Membership && typeof Membership.onChange === 'function'){
+  Membership.onChange(renderPlan);
+}
 
 editNameBtn.addEventListener('click', () => {
   nameInput.value = profileName.textContent;
