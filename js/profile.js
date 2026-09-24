@@ -18,7 +18,9 @@ const openFolderIds = new Set();
 
 function renderUser(user){
   profileName.textContent = user.displayName;
-  avatarInitial.textContent = (user.displayName || '?').trim().charAt(0).toUpperCase();
+  if(avatarInitial){
+    avatarInitial.innerHTML = Auth.getAvatarMarkup(user);
+  }
   profileEmail.textContent = user.email || '';
   profileProvider.textContent = Auth.getProviderLabel(user);
   profileJoined.textContent = user.createdAt || '--';
