@@ -7,7 +7,7 @@
 
 | 類型 | 可以進 git？ | 說明 |
 | --- | --- | --- |
-| Firebase 用戶端設定值（`apiKey`、`authDomain`、`projectId` 等） | ✅ 可以 | 這些本來就設計成公開的，Firebase 的安全性是靠 Security Rules 把關，不是靠隱藏這些值 |
+| Firebase 用戶端設定值（`apiKey`、`authDomain`、`projectId` 等） | ✅ 可以 | 這些本來就設計成公開的，請放在 `js/firebase-config.js`。git hook 已允許這個檔裡的網頁 `apiKey`，其他檔案的 `AIza…` 仍會擋下 |
 | `.env.example` | ✅ 可以 | 只是範例格式，裡面不該填真實的值 |
 | `.env` / `.env.local` | ❌ 絕對不行 | 已被 `.gitignore` 排除，也被 git hook 擋著 |
 | Firebase Service Account JSON（`serviceAccountKey.json` 之類） | ❌ 絕對不行 | 這是後端管理員權限的金鑼，洩漏等於整個專案被拿走控制權 |
@@ -51,12 +51,17 @@ git config core.hooksPath .githooks
 - **正確做法（已實作）：** 前端只呼叫自己的 Azure Function `POST /api/tts`，Function 再用伺服器端環境變數裡的 `AZURE_SPEECH_KEY` 去呼叫 Azure Speech。金鑰永遠不會出現在前端或 git repo
 - 本機把 Key 填進 `api/local.settings.json`（已被 gitignore）；正式環境填進 Azure Portal → Function App → Environment variables
 - `ALLOWED_ORIGINS` 請填 GitHub Pages 網址（例如 `https://USERNAME.github.io`），不要設成 `*`
-- 這個 Function 使用 `authLevel: anonymous`，因為 Function key 若放進前端就等於公開。目前靠 CORS 來源允許清單、文字長度限制、語音 allowlist 降低濫用；之後接正式登入時可以再加上使用者驗證與更嚴格的用量限制
+- 這個 Function 使用 `authLevel: anonymous`，因為 Function key 若放進前端就等於公開。目前靠 CORS 來源允許清單、文字長度限制、語音 allowlist 降低濫用。
+- 正式環境請在 Function App 填 `FIREBASE_WEB_API_KEY`：後端會用 Identity Toolkit 驗證 Google ID Token，沒登入就不能打 `/api/assess` 與 `/api/tts`。
+- Prosody 另外用伺服器環境變數 `PROSODY_VIP_EMAILS` 控制。前端不能決定要不要開 Prosody，也不能存放 VIP 名單。
+- 本機未填 `FIREBASE_WEB_API_KEY` 時維持匿名測試，方便開發發音分析。
 
 ## 5. 正式上線前的檢查清單
 
 - [ ] Firestore／Storage 規則已經從測試模式換成正式的存取控制規則
 - [ ] Google 登入的「已授權網域」已經加上正式網域
+- [ ] Azure Function 已設定 `FIREBASE_WEB_API_KEY`，公開網站的 `/api/assess` 與 `/api/tts` 需登入
+- [ ] `PROSODY_VIP_EMAILS` 只存在後端，且只包含要測試 Prosody 的信箱
 - [ ] 語音分析／TTS API 金鑰只存在 Azure Function 後端環境變數，前端程式碼跟 git repo 裡都找不到
 - [ ] Firebase 專案已設定用量／帳單預算警示（Budget Alerts）
 - [ ] 確認 `.env`、Service Account JSON 等機密檔案從來沒有被 commit 過（可以用 `git log --all --full-history -- .env` 之類的指令檢查）

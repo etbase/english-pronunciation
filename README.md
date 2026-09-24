@@ -15,23 +15,23 @@
 - 依分數切換角色表情圖
 - 保留最近 10 筆練習紀錄（暫存於瀏覽器 `localStorage`），含分析分數，可一鍵「重新練習」帶回練習頁，或刪除單筆紀錄
 - 資料夾收藏：練習頁與歷史紀錄都能把句子收藏到資料夾（可新增／重新命名／刪除資料夾），並在「我的帳戶」頁面依資料夾檢視收藏的句子
-- 模擬登入（Google 登入模擬）與「我的帳戶」頁面：顯示名字（可編輯）、已連接帳號、資料夾收藏、登出
+- 模擬登入（Firebase 尚未填設定時）與正式 Google 登入（填好 `js/firebase-config.js` 後）：「我的帳戶」頁面顯示名字（可編輯）、已連接帳號、資料夾收藏、登出
+- 正式環境的發音分析與 Azure 標準發音需 Google 登入；韻律自然度（Prosody）只對後端 VIP 信箱名單開放
 
 ## 技術棚
 
 **目前：**
 
 - 靜態前端：HTML5 / CSS3 / Vanilla JavaScript（無框架、無建置工具），可部署 GitHub Pages
-- Azure Functions（Node.js）：`POST /api/tts` 代理呼叫 Azure Speech Text-to-Speech，金鑰只存在後端環境變數
+- Firebase Authentication（Google 登入；`js/firebase-config.js` 空白時退回模擬登入）
+- Azure Functions（Node.js）：`POST /api/tts`、`POST /api/assess` 代理 Azure Speech，金鑰只存在後端環境變數。正式環境填了 `FIREBASE_WEB_API_KEY` 後會驗證 Google ID Token；Prosody 只對 `PROSODY_VIP_EMAILS` 裡的信箱開啟
 - 瀏覽器原生 API：`SpeechSynthesis`（TTS 後備）、`MediaRecorder`（錄音）
 - 狀態儲存：`localStorage`（僅存在使用者本機瀏覽器，無雲端同步）
 
 **規劃中（詳見開發路線圖）：**
 
-- Firebase Authentication（登入，可擴充 Google / Email / Apple 等多種登入方式）
 - Firestore（使用者資料、練習紀錄）、Firebase Storage（錄音檔）
-- Cloud Functions（後端，代理呼叫 AI 語音分析服務、保護金鑰）
-- AI 語音分析服務（發音、重音、節奏、語調、連音、省音、流暢度）
+- 會員付費方案與更完整的用量限制
 
 ## 專案結構
 
@@ -46,9 +46,13 @@ english-pronunciation/
 │   └── style.css        # 全站樣式
 ├── js/
 │   ├── app.js            # 練習頁核心邏輯（錄音、模擬評分、寫入歷史、累計練習統計）
-│   ├── config.js         # 前端公開設定（只有 TTS API 網址，沒有任何金鑰）
+│   ├── config.js         # 前端公開設定（只有 API 網址，沒有任何金鑰）
+│   ├── firebase-config.js # Firebase 公開設定（空白時走模擬登入）
+│   ├── auth-firebase.js  # Google 登入（Firebase Authentication）
+│   ├── auth-mock.js      # Firebase 未設定時的模擬登入
+│   ├── auth-service.js   # 全站 Auth.* 介面
 │   ├── tts.js            # 全站標準發音播放（呼叫 /api/tts、session cache、playbackRate、speechSynthesis 後備）
-│   ├── login.js          # 登入邏輯（目前為模擬登入）
+│   ├── login.js          # 登入頁邏輯
 │   ├── profile.js        # 我的帳戶頁邏輯（顯示使用者資料、編輯名字、資料夾清單、登出）
 │   ├── account-nav.js    # 依登入狀態切換帳戶圖示（側邊欄＋手機底部選單）要導向登入頁或個人頁面
 │   ├── history.js        # 歷史紀錄讀取與渲染
@@ -135,6 +139,8 @@ Functions 本機預設是 `http://localhost:7071/api/tts`。前端用 `python3 -
 | `AZURE_SPEECH_KEY` | Speech 資源的 Key 1（只貼在這裡） |
 | `AZURE_SPEECH_REGION` | 例如 `eastus` |
 | `ALLOWED_ORIGINS` | 你的 GitHub Pages 來源，例如 `https://USERNAME.github.io`（可逗號分隔多個；不要設 `*`） |
+| `FIREBASE_WEB_API_KEY` | 與前端 `firebase-config.js` 相同的公開 `apiKey`。**有填才會強制 Google 登入**，並用來驗證 ID Token |
+| `PROSODY_VIP_EMAILS` | 允許測試 Prosody 的 Google 信箱，逗號分隔。不要寫進前端 |
 
 Azure Portal 的 Function App → CORS 也請填同一個 GitHub Pages 來源，不要勾選「允許所有」。
 
@@ -146,13 +152,27 @@ https://YOUR-FUNCTION-APP.azurewebsites.net/api/tts
 
 這是公開 API 網址，不是金鑰。
 
-**絕對不要 commit：** `api/local.settings.json`、根目錄 `.env`、任何含真實 Key 的檔案。
+**絕對不要 commit：** `api/local.settings.json`、根目錄 `.env`、任何含真實 Key 的檔案、VIP 信箱名單。
+
+## Google 登入與 VIP Prosody
+
+這一步是為了避免公開網站被匿名濫用 Azure Speech（尤其是加購的 Prosody）。
+
+1. 在 [Firebase Console](https://console.firebase.google.com/) 建立專案，啟用 **Authentication → Google** 登入。
+2. **Authentication → Settings → Authorized domains** 加上 GitHub Pages 網域，本機測試再加 `localhost`。
+3. 把專案的公開設定填進 `js/firebase-config.js`（`apiKey`、`authDomain`、`projectId` 等；這些本來就是公開的）。
+4. Azure Function 環境變數填 `FIREBASE_WEB_API_KEY`（同一個 `apiKey`）。填了之後，`/api/assess` 與 `/api/tts` 沒有有效 Google ID Token 會回 `401 LOGIN_REQUIRED`。
+5. 把要測試 Prosody 的 Gmail 填進後端 `PROSODY_VIP_EMAILS`，例如 `you@gmail.com,vip@example.com`。名單只放伺服器，不要放前端。
+
+本機若還沒填 `FIREBASE_WEB_API_KEY`，發音分析仍可匿名測試（跟現在一樣）。Prosody 不會對所有人開啟。
+
+Azure REST short-audio 不一定會回傳 `ProsodyScore`；VIP 請求會帶 `EnableProsodyAssessment`，有分數才顯示，沒有就標「本次未回傳」，不會自己編造分數。
 
 
 ## 開發路線圖
 
 **第一階段：帳號與資料儲存**
-- Firebase Authentication 登入（設計為可插拔多供應商，非寫死僅支援 Google）
+- Google 登入（Firebase Authentication）與後端 VIP Prosody 閘道：已接上。公開網站需再填 Firebase 設定與 Azure Function 的 `FIREBASE_WEB_API_KEY` / `PROSODY_VIP_EMAILS` 才會真正擋匿名用量
 - 使用者資料、練習紀錄改存雲端（Firestore + Storage），取代目前的 `localStorage`
 
 **第二階段：真正的 AI 語音分析**

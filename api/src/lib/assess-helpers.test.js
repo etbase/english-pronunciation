@@ -51,6 +51,11 @@ assert.equal(config.EnableMiscue, true);
 assert.equal(config.PhonemeAlphabet, 'IPA');
 assert.equal('EnableProsodyAssessment' in config, false);
 
+const vipConfig = buildPronunciationAssessmentConfig('Hello world', true);
+assert.equal(vipConfig.EnableProsodyAssessment, true);
+const vipHeaderJson = Buffer.from(buildPronunciationAssessmentHeader('Hello', true), 'base64').toString('utf8');
+assert.equal(vipHeaderJson.includes('EnableProsodyAssessment'), true);
+
 const headerJson = Buffer.from(buildPronunciationAssessmentHeader('Hello'), 'base64').toString('utf8');
 assert.equal(headerJson.includes('EnableProsodyAssessment'), false);
 assert.equal(headerJson.includes('Hello'), true);
@@ -151,6 +156,8 @@ assert.equal(parsed.overallDebug.displayOverall, 73);
 assert.equal(parsed.overallDebug.displayAccuracy, 60);
 assert.equal(parsed.overallDebug.displayFluency, 91);
 assert.equal(parsed.prosody.enabled, false);
+assert.equal(parsed.prosody.score, null);
+assert.equal(parsed.displayScores.prosody, null);
 assert.equal('prosodyScore' in parsed.scores, false);
 assert.equal(parsed.issues.mispronunciations[0].word, 'particularly');
 assert.equal(parsed.issues.omissions[0].word, 'missing');
@@ -159,6 +166,25 @@ assert.equal(parsed.words[0].syllables.length, 2);
 assert.equal(parsed.words[0].syllables[0].phonemes.map(p => p.phoneme).join(''), 'hɛ');
 assert.equal(parsed.words[0].syllables[1].phonemes.map(p => p.phoneme).join(''), 'loʊ');
 assert.equal(parsed.words[1].syllables[0].accuracyScore, 40);
+
+const vipParsed = parseAssessmentResult({
+  RecognitionStatus: 'Success',
+  DisplayText: 'Hello.',
+  NBest: [{
+    Display: 'Hello.',
+    PronunciationAssessment: {
+      AccuracyScore: 90,
+      FluencyScore: 90,
+      CompletenessScore: 90,
+      PronScore: 90,
+      ProsodyScore: 71.4
+    },
+    Words: []
+  }]
+}, { enableProsody: true });
+assert.equal(vipParsed.prosody.enabled, true);
+assert.equal(vipParsed.prosody.score, 71.4);
+assert.equal(vipParsed.displayScores.prosody, 71);
 
 const restParsed = parseAssessmentResult({
   RecognitionStatus: 'Success',

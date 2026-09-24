@@ -31,7 +31,7 @@ function pickCorsOrigin(requestOrigin, allowedList){
 function corsHeaders(origin){
   const headers = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin'
   };

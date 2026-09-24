@@ -33,6 +33,13 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   fi
 
   for pattern in "${CONTENT_PATTERNS[@]}"; do
+    if [ "$pattern" = 'AIza[0-9A-Za-z_-]{35,}' ]; then
+      if git log -p "$range" -- . ':(exclude)js/firebase-config.js' 2>/dev/null | grep -Eq "$pattern"; then
+        echo -e "${RED}✗ 擋下 push：即將推送的內容裡疑似含有機密金鑼（符合格式：${pattern}）。${NC}"
+        echo "x" >> "$TMP_FLAG"
+      fi
+      continue
+    fi
     if git log -p "$range" 2>/dev/null | grep -Eq "$pattern"; then
       echo -e "${RED}✗ 擋下 push：即將推送的內容裡疑似含有機密金鑼（符合格式：${pattern}）。${NC}"
       echo "x" >> "$TMP_FLAG"

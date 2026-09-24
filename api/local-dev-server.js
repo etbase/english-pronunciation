@@ -8,15 +8,8 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const {
-  parseAllowedOrigins,
-  pickCorsOrigin,
-  corsHeaders,
-  validateTtsBody,
-  buildSsml,
-  getTtsUrl
-} = require('./src/lib/tts-helpers');
 const { runAssess } = require('./src/lib/assess-run');
+const { runTts } = require('./src/lib/tts-run');
 
 const ROOT = path.resolve(__dirname, '..');
 const SETTINGS_FILE = path.join(__dirname, 'local.settings.json');
@@ -72,99 +65,6 @@ async function readJsonBody(req){
   const raw = Buffer.concat(chunks).toString('utf8');
   if(!raw.trim()) return {};
   return JSON.parse(raw);
-}
-
-async function runTts({ method, origin, body, env, log }){
-  const logger = typeof log === 'function' ? log : () => {};
-  const allowedOrigins = parseAllowedOrigins(env.ALLOWED_ORIGINS);
-  const cors = pickCorsOrigin(origin || null, allowedOrigins);
-  if(!cors.ok){
-    return {
-      status: 403,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(null) },
-      jsonBody: { error: 'Origin is not allowed.' }
-    };
-  }
-  if(method === 'OPTIONS'){
-    return { status: 204, headers: corsHeaders(cors.origin), jsonBody: null };
-  }
-  if(method !== 'POST'){
-    return {
-      status: 405,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(cors.origin) },
-      jsonBody: { error: 'Method not allowed.' }
-    };
-  }
-
-  const parsed = validateTtsBody(body);
-  if(!parsed.ok){
-    return {
-      status: 400,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(cors.origin) },
-      jsonBody: { error: parsed.error }
-    };
-  }
-
-  const speechKey = String(env.AZURE_SPEECH_KEY || '').trim();
-  const speechRegion = String(env.AZURE_SPEECH_REGION || '').trim();
-  const ttsUrl = getTtsUrl(speechRegion);
-  if(!speechKey || speechKey === 'YOUR_KEY_HERE' || !ttsUrl){
-    return {
-      status: 503,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(cors.origin) },
-      jsonBody: { error: 'Speech service is not configured.' }
-    };
-  }
-
-  let azureResponse;
-  try{
-    azureResponse = await fetch(ttsUrl, {
-      method: 'POST',
-      headers: {
-        'Ocp-Apim-Subscription-Key': speechKey,
-        'Content-Type': 'application/ssml+xml',
-        'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
-        'User-Agent': 'english-pronunciation-tts'
-      },
-      body: buildSsml(parsed.text, parsed.voice),
-      signal: AbortSignal.timeout(15000)
-    });
-  }catch(error){
-    logger(`TTS upstream request failed: ${error && error.name}`);
-    return {
-      status: 502,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(cors.origin) },
-      jsonBody: { error: 'Unable to generate speech.' }
-    };
-  }
-
-  if(!azureResponse.ok){
-    logger(`TTS upstream status ${azureResponse.status}`);
-    return {
-      status: 502,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(cors.origin) },
-      jsonBody: { error: 'Unable to generate speech.' }
-    };
-  }
-
-  const audioBuffer = Buffer.from(await azureResponse.arrayBuffer());
-  if(!audioBuffer.length){
-    return {
-      status: 502,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(cors.origin) },
-      jsonBody: { error: 'Unable to generate speech.' }
-    };
-  }
-
-  return {
-    status: 200,
-    headers: {
-      'Content-Type': 'audio/mpeg',
-      'Cache-Control': 'no-store',
-      ...corsHeaders(cors.origin)
-    },
-    body: audioBuffer
-  };
 }
 
 function serveStatic(req, res){
@@ -229,7 +129,14 @@ async function serveApi(req, res, env){
     }
     const audioChars = body && typeof body.audioBase64 === 'string' ? body.audioBase64.length : 0;
     console.log(`API ${method} /api/assess origin=${origin || '-'} audioChars=${audioChars} textChars=${body && typeof body.text === 'string' ? body.text.trim().length : 0}`);
-    const result = await runAssess({ method, origin, body, env: localEnv, log: console.log });
+    const result = await runAssess({
+      method,
+      origin,
+      body,
+      authorization: req.headers.authorization || '',
+      env: localEnv,
+      log: console.log
+    });
     console.log(`API /api/assess -> ${result.status}`);
     applyResult(res, result);
     return;
@@ -248,7 +155,14 @@ async function serveApi(req, res, env){
         return;
       }
     }
-    const result = await runTts({ method, origin, body, env: localEnv, log: console.log });
+    const result = await runTts({
+      method,
+      origin,
+      body,
+      authorization: req.headers.authorization || '',
+      env: localEnv,
+      log: console.log
+    });
     applyResult(res, result, result.body);
     return;
   }

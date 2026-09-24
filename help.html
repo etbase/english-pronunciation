@@ -9,8 +9,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=20260903-avatar1">
-  <script src="js/auth-mock.js?v=20260903-auth1"></script>
-  <script src="js/auth-service.js?v=20260903-auth1"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="js/firebase-config.js?v=20260916-auth2"></script>
+  <script src="js/auth-firebase.js?v=20260916-auth1"></script>
+  <script src="js/auth-mock.js?v=20260916-auth1"></script>
+  <script src="js/auth-service.js?v=20260916-auth1"></script>
 </head>
 <body>
 <div class="app">
@@ -40,8 +44,8 @@
   </div>
   <div class="faq" style="margin-top:22px">
     <details open><summary>現在這個版本可以做什麼？</summary><p>可以輸入英文句子、播放標準美式發音、錄音，並把錄音送到 Azure Speech Pronunciation Assessment 做真實評分。系統會保存最近 10 筆練習紀錄。標準發音會優先使用 Azure 神經語音；若後端尚未設定或暫時失敗，會改用瀏覽器內建語音。</p></details>
-    <details><summary>現在的發音分析是真的嗎？</summary><p>是。總體發音、準確度、流暢度、朗讀完整度都來自 Azure Pronunciation Assessment 的 PronScore、AccuracyScore、FluencyScore、CompletenessScore。韻律自然度（Prosody）目前尚未啟用，畫面上不會顯示這項分數。</p></details>
-    <details><summary>為什麼還沒有韻律自然度分數？</summary><p>Azure 的 Prosody 是加購評分，目前先不開啟，避免額外用量。之後若要加入，可以直接顯示官方 ProsodyScore，不會另外發明重音、語調、語速或節奏的分數。</p></details>
+    <details><summary>現在的發音分析是真的嗎？</summary><p>是。總體發音、準確度、流暢度、朗讀完整度都來自 Azure Pronunciation Assessment 的 PronScore、AccuracyScore、FluencyScore、CompletenessScore。韻律自然度（Prosody）只對指定 VIP 測試帳號開啟，一般登入會員不會送出這項加購評分。</p></details>
+    <details><summary>為什麼要登入才能分析？</summary><p>網站是公開的。發音分析與標準發音會呼叫 Azure Speech，沒有登入限制的話任何人都能消耗額度。正式環境會驗證 Google 登入；韻律自然度另外只開放給後端 VIP 名單裡的信箱。</p></details>
   </div>
 </section>
 </main>

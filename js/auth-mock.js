@@ -1,7 +1,9 @@
 // Mock Authentication backend。
-// Firebase integration point: 之後改載入 Firebase 版 AUTH_BACKEND，此檔即可停用。
+// 只有 Firebase 尚未設定時才會接管 AUTH_BACKEND；正式 Google 登入由 js/auth-firebase.js 處理。
 // 介面需與 js/auth-service.js 使用的 AUTH_BACKEND 方法一致。
 (function (global) {
+  if (global.AUTH_BACKEND) return;
+
   const STORAGE_KEY = 'pronunciationUser';
   const MOCK_UID = 'mock-google-ellie';
 
@@ -49,7 +51,17 @@
   }
 
   global.AUTH_BACKEND = {
+    isFirebase: false,
+
+    whenReady: function(){
+      return Promise.resolve();
+    },
+
     getCurrentUser: readUser,
+
+    getIdToken: function(){
+      return Promise.resolve(null);
+    },
 
     signIn: function(){
       const user = {

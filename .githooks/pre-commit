@@ -30,6 +30,11 @@ git diff --cached --name-only --diff-filter=ACM | while IFS= read -r file; do
     continue
   fi
 
+  # Firebase 網頁端 apiKey 本來就是公開的，允許寫在 js/firebase-config.js。
+  if [ "$file" = "js/firebase-config.js" ]; then
+    continue
+  fi
+
   if echo "$file" | grep -Eq "$BLOCKED_NAME_PATTERN"; then
     echo -e "${RED}✗ 擋下 commit：${file} 屬於機密設定檔，不該進版本控制（已列在 .gitignore 名單內）。${NC}"
     echo "x" >> "$TMP_FLAG"

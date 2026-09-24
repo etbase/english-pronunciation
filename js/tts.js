@@ -94,11 +94,17 @@
   }
 
   async function fetchTtsAudio(text, voice, apiUrl){
+    const headers = global.Auth && typeof Auth.authHeaders === 'function'
+      ? await Auth.authHeaders({ 'Content-Type': 'application/json' })
+      : { 'Content-Type': 'application/json' };
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ text, voice })
     });
+    if(response.status === 401){
+      throw new Error('LOGIN_REQUIRED');
+    }
     if(!response.ok){
       throw new Error('tts-http');
     }

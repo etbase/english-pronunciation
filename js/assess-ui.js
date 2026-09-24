@@ -12,6 +12,7 @@ const ASSESS_ERROR_TEXT = {
   NOT_CONFIGURED: '評分服務尚未設定，目前無法分析。',
   BAD_REQUEST: '送出的錄音或句子無法分析，請重新錄音後再試。',
   ASSESS_FAILED: '目前無法完成發音分析，請稍後再試。',
+  LOGIN_REQUIRED: '請先用 Google 登入後再分析發音。',
   NETWORK: '無法連線到評分服務，請確認網路後再試。'
 };
 
@@ -141,6 +142,39 @@ function renderDetailAnalysis(result){
   detail.hidden = false;
 }
 
+function setProsodyMetric(enabled, score){
+  const metric = document.getElementById('metric-prosody');
+  if(!metric) return;
+  const barWrap = metric.querySelector('.bar');
+  const bar = document.getElementById('bar-prosody');
+  const label = document.getElementById('value-prosody');
+  const note = metric.querySelector('.metric-note');
+
+  if(!enabled){
+    metric.classList.add('metric-disabled');
+    if(barWrap) barWrap.classList.add('bar-idle');
+    if(bar) bar.style.width = '0%';
+    if(label){
+      label.classList.add('value-idle');
+      label.textContent = '尚未啟用';
+    }
+    if(note) note.textContent = '韻律自然度僅對指定 VIP 測試帳號開啟，並由伺服器驗證身分。';
+    return;
+  }
+
+  metric.classList.remove('metric-disabled');
+  if(barWrap) barWrap.classList.remove('bar-idle');
+  if(label) label.classList.remove('value-idle');
+  if(score == null){
+    if(bar) bar.style.width = '0%';
+    if(label) label.textContent = '本次未回傳';
+    if(note) note.textContent = '已為 VIP 帳號送出 Prosody 評分，但這次結果沒有韻律分數。';
+    return;
+  }
+  if(note) note.textContent = 'VIP 測試：綜合重音、語調、語速與節奏。';
+  setMetricScore('prosody', score);
+}
+
 function renderAssessment(result){
   const scores = result.displayScores || {};
   const overall = formatAzureScore(scores.overall);
@@ -153,6 +187,7 @@ function renderAssessment(result){
   setMetricScore('accuracy', scores.accuracy);
   setMetricScore('fluency', scores.fluency);
   setMetricScore('completeness', scores.completeness);
+  setProsodyMetric(result.prosody && result.prosody.enabled, scores.prosody != null ? scores.prosody : (result.prosody && result.prosody.score));
 
   const issues = result.issues || {};
   const mis = joinWords(issues.mispronunciations);
@@ -190,6 +225,7 @@ function resetAssessmentUi(){
       label.appendChild(small);
     }
   });
+  setProsodyMetric(false, null);
 
   const scoreText = document.getElementById('scoreText');
   const scoreMessage = document.getElementById('scoreMessage');
@@ -240,13 +276,19 @@ async function runPronunciationAssessment(text, recordingBlob, setStatus){
   if(typeof setStatus === 'function') setStatus('音訊已轉換，正在送出 Azure 分析……');
 
   const audioBase64 = await assessmentWavToBase64(wavBlob);
+  const headers = window.Auth && typeof Auth.authHeaders === 'function'
+    ? await Auth.authHeaders({ 'Content-Type': 'application/json' })
+    : { 'Content-Type': 'application/json' };
   const response = await fetch(apiUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ text, audioBase64 })
   });
   let payload = null;
   try{ payload = await response.json(); }catch(e){ payload = null; }
+  if(response.status === 401){
+    throw new Error('LOGIN_REQUIRED');
+  }
   if(!response.ok || !payload || !payload.scores){
     const code = payload && payload.code ? payload.code : (response.status === 422 ? 'NO_SPEECH' : 'ASSESS_FAILED');
     assessDebug('response failed', {

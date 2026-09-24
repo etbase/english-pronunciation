@@ -1,11 +1,17 @@
 // 全站 Authentication 介面。頁面只透過 Auth.*，不要自己讀寫登入資料。
-// Firebase integration point: 保留此檔；之後用 Firebase 實作 AUTH_BACKEND
-//（設定放 js/firebase-config.js），取代 js/auth-mock.js。
+// Firebase 設定在 js/firebase-config.js；有填才走 Google 登入，否則維持模擬登入。
 (function (global) {
   const listeners = [];
 
   function backend(){
     return global.AUTH_BACKEND;
+  }
+
+  function whenReady(){
+    if(backend() && typeof backend().whenReady === 'function'){
+      return backend().whenReady();
+    }
+    return Promise.resolve();
   }
 
   function notify(user){
@@ -45,11 +51,36 @@
   function onAuthStateChanged(callback){
     if(typeof callback !== 'function') return function(){};
     listeners.push(callback);
-    callback(getCurrentUser());
+    whenReady().then(function(){
+      if(listeners.indexOf(callback) >= 0){
+        callback(getCurrentUser());
+      }
+    });
     return function unsubscribe(){
       const index = listeners.indexOf(callback);
       if(index >= 0) listeners.splice(index, 1);
     };
+  }
+
+  function getIdToken(){
+    if(backend() && typeof backend().getIdToken === 'function'){
+      return Promise.resolve().then(function(){
+        return backend().getIdToken();
+      });
+    }
+    return Promise.resolve(null);
+  }
+
+  function authHeaders(extra){
+    const headers = extra ? Object.assign({}, extra) : {};
+    return getIdToken().then(function(token){
+      if(token) headers.Authorization = 'Bearer ' + token;
+      return headers;
+    });
+  }
+
+  function isFirebase(){
+    return !!(backend() && backend().isFirebase);
   }
 
   function getProviderLabel(user){
@@ -84,6 +115,10 @@
     signOut: signOut,
     updateProfile: updateProfile,
     onAuthStateChanged: onAuthStateChanged,
+    whenReady: whenReady,
+    getIdToken: getIdToken,
+    authHeaders: authHeaders,
+    isFirebase: isFirebase,
     getProviderLabel: getProviderLabel,
     getAvatarMarkup: getAvatarMarkup
   };

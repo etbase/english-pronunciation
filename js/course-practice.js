@@ -241,6 +241,10 @@
       setStatus(ASSESS_ERROR_TEXT.NOT_CONFIGURED);
       return;
     }
+    if(window.Auth && Auth.isFirebase() && !Auth.isAuthenticated()){
+      setStatus(ASSESS_ERROR_TEXT.LOGIN_REQUIRED);
+      return;
+    }
 
     analyzeBtn.disabled = true;
     if(typeof Character !== 'undefined') Character.onAnalyzeStarted();

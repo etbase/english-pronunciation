@@ -2,8 +2,8 @@
 
 const { MAX_TEXT_LENGTH } = require('./tts-helpers');
 
-// 未來若要開啟韻律評分，只改這裡為 true，並在回傳中帶出 ProsodyScore。
-// 本次必須維持 false：不呼叫、不加購、不回傳 Prosody 分數。
+// 全域總開關必須維持 false：不要對所有人開啟 Prosody。
+// 僅後端驗證過的 VIP 信箱可以在單次請求帶 EnableProsodyAssessment。
 const ENABLE_PROSODY_ASSESSMENT = false;
 
 const MAX_AUDIO_BYTES = 1_200_000;
@@ -21,7 +21,7 @@ function getAssessUrl(region){
   return `https://${safeRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US&format=detailed`;
 }
 
-function buildPronunciationAssessmentConfig(referenceText){
+function buildPronunciationAssessmentConfig(referenceText, enableProsody){
   // 本專案走 Azure Speech REST short-audio API（Pronunciation-Assessment header），不是 Speech SDK。
   // REST 文件欄位：ReferenceText、GradingSystem、Granularity、Dimension、EnableMiscue、PhonemeAlphabet。
   const params = {
@@ -32,14 +32,14 @@ function buildPronunciationAssessmentConfig(referenceText){
     EnableMiscue: true,
     PhonemeAlphabet: 'IPA'
   };
-  if(ENABLE_PROSODY_ASSESSMENT){
+  if(enableProsody){
     params.EnableProsodyAssessment = true;
   }
   return params;
 }
 
-function buildPronunciationAssessmentHeader(referenceText){
-  return Buffer.from(JSON.stringify(buildPronunciationAssessmentConfig(referenceText)), 'utf8').toString('base64');
+function buildPronunciationAssessmentHeader(referenceText, enableProsody){
+  return Buffer.from(JSON.stringify(buildPronunciationAssessmentConfig(referenceText, enableProsody)), 'utf8').toString('base64');
 }
 
 function findChunk(buffer, id, start){
@@ -458,6 +458,8 @@ function parseAssessmentResult(azureJson, options){
     completeness,
     options && options.audioSeconds
   );
+  const enableProsody = !!(options && options.enableProsody);
+  const prosodyScore = asScore(pa.ProsodyScore);
 
   return {
     ok: true,
@@ -471,7 +473,8 @@ function parseAssessmentResult(azureJson, options){
       overall: overallDebug.displayOverall,
       accuracy: overallDebug.displayAccuracy,
       fluency: overallDebug.displayFluency,
-      completeness: displayScore(completeness)
+      completeness: displayScore(completeness),
+      prosody: enableProsody && prosodyScore != null ? displayScore(prosodyScore) : null
     },
     overallDebug,
     recognizedText: String(azureJson.DisplayText || nbest.Display || ''),
@@ -483,7 +486,8 @@ function parseAssessmentResult(azureJson, options){
       insertions
     },
     prosody: {
-      enabled: ENABLE_PROSODY_ASSESSMENT
+      enabled: enableProsody,
+      score: enableProsody ? (prosodyScore == null ? null : prosodyScore) : null
     },
     lowAccuracyThreshold: LOW_ACCURACY_THRESHOLD
   };

@@ -23,6 +23,7 @@ app.http('assess', {
       method: request.method,
       origin: request.headers.get('origin'),
       body,
+      authorization: request.headers.get('authorization'),
       env: process.env,
       log: (message) => context.log(message)
     });

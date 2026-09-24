@@ -1,8 +1,8 @@
 'use strict';
 
 const { pickCorsOrigin, parseAllowedOrigins, corsHeaders } = require('./tts-helpers');
+const { requireSpeechAuth } = require('./firebase-auth');
 const {
-  ENABLE_PROSODY_ASSESSMENT,
   getAssessUrl,
   buildPronunciationAssessmentHeader,
   validateAssessBody,
@@ -50,7 +50,7 @@ function isLocalDebugOrigin(origin){
   }
 }
 
-async function runAssess({ method, origin, body, env, log }){
+async function runAssess({ method, origin, body, env, authorization, log }){
   const logger = typeof log === 'function' ? log : () => {};
   const allowedOrigins = parseAllowedOrigins(env.ALLOWED_ORIGINS);
   const cors = pickCorsOrigin(origin || null, allowedOrigins);
@@ -71,6 +71,12 @@ async function runAssess({ method, origin, body, env, log }){
     return jsonResponse(405, { error: 'Method not allowed.' }, cors.origin);
   }
 
+  const auth = await requireSpeechAuth({ env, authorization });
+  if(!auth.ok){
+    return jsonResponse(auth.status, { error: auth.error, code: auth.code }, cors.origin);
+  }
+  const enableProsody = !!auth.enableProsody;
+
   const parsed = validateAssessBody(body);
   if(!parsed.ok){
     return jsonResponse(400, { error: parsed.error, code: 'BAD_REQUEST' }, cors.origin);
@@ -85,7 +91,7 @@ async function runAssess({ method, origin, body, env, log }){
     return jsonResponse(503, { error: 'Speech service is not configured.', code: 'NOT_CONFIGURED' }, cors.origin);
   }
 
-  logger(`Assess wav bytes=${parsed.audio.length} textChars=${parsed.text.length} region-host=stt.speech.microsoft.com EnableMiscue=true Granularity=Phoneme Prosody=${ENABLE_PROSODY_ASSESSMENT ? 'on' : 'off'}`);
+  logger(`Assess wav bytes=${parsed.audio.length} textChars=${parsed.text.length} region-host=stt.speech.microsoft.com EnableMiscue=true Granularity=Phoneme Prosody=${enableProsody ? 'vip' : 'off'}`);
 
   let azureResponse;
   try{
@@ -95,7 +101,7 @@ async function runAssess({ method, origin, body, env, log }){
         'Ocp-Apim-Subscription-Key': speechKey,
         'Content-Type': 'audio/wav; codecs=audio/pcm; samplerate=16000',
         'Accept': 'application/json',
-        'Pronunciation-Assessment': buildPronunciationAssessmentHeader(parsed.text),
+        'Pronunciation-Assessment': buildPronunciationAssessmentHeader(parsed.text, enableProsody),
         'User-Agent': 'english-pronunciation-assess'
       },
       body: parsed.audio,
@@ -121,7 +127,7 @@ async function runAssess({ method, origin, body, env, log }){
     return jsonResponse(502, { error: 'Unable to analyze pronunciation.', code: 'ASSESS_FAILED' }, cors.origin);
   }
 
-  const result = parseAssessmentResult(azureJson, { audioSeconds: parsed.seconds });
+  const result = parseAssessmentResult(azureJson, { audioSeconds: parsed.seconds, enableProsody });
   if(!result.ok){
     if(result.error === 'NO_SPEECH'){
       return jsonResponse(422, { error: 'No clear English speech was recognized. Please record again.', code: 'NO_SPEECH' }, cors.origin);
@@ -134,7 +140,7 @@ async function runAssess({ method, origin, body, env, log }){
   if(isLocalDebugOrigin(origin)){
     logger('Assess diagnostic ' + JSON.stringify(diagnostic));
   }else{
-    logger(`Assess ok, ${parsed.text.length} chars, words=${result.words.length}, recognizedChars=${result.recognizedText.length}, omissions=${result.issues.omissions.length}, insertions=${result.issues.insertions.length}, mispronunciations=${result.issues.mispronunciations.length}, prosody=${ENABLE_PROSODY_ASSESSMENT ? 'on' : 'off'}`);
+    logger(`Assess ok, ${parsed.text.length} chars, words=${result.words.length}, recognizedChars=${result.recognizedText.length}, omissions=${result.issues.omissions.length}, insertions=${result.issues.insertions.length}, mispronunciations=${result.issues.mispronunciations.length}, prosody=${enableProsody ? 'vip' : 'off'}`);
   }
 
   return jsonResponse(200, {

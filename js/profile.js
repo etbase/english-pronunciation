@@ -24,12 +24,20 @@ function renderUser(user){
   profileJoined.textContent = user.createdAt || '--';
 }
 
-if(!Auth.isAuthenticated()){
-  location.href = 'login.html';
-}else{
+Auth.whenReady().then(function(){
+  if(!Auth.isAuthenticated()){
+    location.href = 'login.html';
+    return;
+  }
+  const hint = document.querySelector('.hint');
+  if(hint){
+    hint.textContent = Auth.isFirebase()
+      ? '這是你的 Google 帳號資料。韻律自然度（Prosody）是否開啟，由伺服器依 VIP 名單驗證，網站前端不會存放這份名單。'
+      : '目前尚未填入 Firebase 設定，顯示的是模擬登入資料。';
+  }
   renderUser(Auth.getCurrentUser());
   renderFolders();
-}
+});
 
 Auth.onAuthStateChanged(next => {
   if(!next){
