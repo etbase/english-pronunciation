@@ -9,6 +9,7 @@
 - `js/kk.js`
 - `js/kk-data.js`
 - `assets/icons/kk-phonetic.svg`
+- `assets/icons/kkspeaker.svg`
 - `assets/kk/`（含 `audio/*.mp3` 與若有的 `kk-phonemes.zip`）
 - `scripts/generate-kk-audio.js`
 - `KK_FEATURE_REMOVAL.md`（本檔）
