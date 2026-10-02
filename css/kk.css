@@ -1,0 +1,101 @@
+/* TEMP KK PHONETIC FEATURE — only loaded by kk.html */
+
+.page-card.kk-page{
+  max-width:980px;
+}
+
+.kk-toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:0 0 8px;
+}
+
+.kk-toolbar [hidden]{
+  display:none !important;
+}
+
+.kk-status{
+  margin-top:16px;
+  margin-bottom:0;
+}
+
+.kk-columns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:22px;
+  margin-top:22px;
+}
+
+.kk-list{
+  display:grid;
+  gap:8px;
+}
+
+.kk-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#ffffff;
+  padding:10px 12px;
+  min-height:56px;
+}
+
+.kk-symbol{
+  flex:1;
+  min-width:64px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:22px;
+  font-weight:800;
+  color:var(--text);
+  letter-spacing:.02em;
+}
+
+.kk-group-title{
+  margin-bottom:14px;
+}
+
+.kk-row.is-playing{
+  background:#eef1f5;
+}
+
+.kk-icon-btn{
+  width:42px;
+  height:42px;
+  min-height:42px;
+  padding:0;
+  justify-content:center;
+  align-items:center;
+  flex-shrink:0;
+}
+
+.kk-toolbar .primary-btn{
+  min-height:auto;
+  font-size:15px;
+}
+
+.kk-icon-btn img{
+  width:18px;
+  height:18px;
+  filter:var(--icon-tint);
+}
+
+.kk-icon-btn:hover img{
+  filter:var(--teal-icon-tint);
+}
+
+@media(max-width:1100px){
+  .kk-columns{
+    grid-template-columns:1fr;
+    gap:16px;
+  }
+  .kk-row{
+    min-width:0;
+  }
+  .kk-symbol{
+    min-width:0;
+    font-size:20px;
+  }
+}

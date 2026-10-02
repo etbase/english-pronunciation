@@ -1,0 +1,4 @@
+# TEMP KK PHONETIC FEATURE — 音檔放置處
+# 每個音標一個 MP3，檔名對應 js/kk-data.js 的 id，內容為該音標連續發音 3 次。
+# 例如：i.mp3、ih.mp3、ey.mp3
+# 全部打包可另放 kk-phonemes.zip 於上一層資料夾（assets/kk/kk-phonemes.zip）。
