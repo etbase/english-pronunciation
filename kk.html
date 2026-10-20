@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=20260924-avatar2">
-  <link rel="stylesheet" href="css/kk.css?v=20261020-ex2">
+  <link rel="stylesheet" href="css/kk.css?v=20261021-ex3">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -69,7 +69,7 @@
 
   <div id="kkExamplesPanel" hidden>
     <div class="section-title"><span class="num"><img src="assets/icons/kk-phonetic.svg" alt=""></span>單字例句</div>
-    <p class="hint">資料來自 KK 音標互動學習網站。音檔使用 Azure Neural TTS：女聲 Ava、男聲 Guy，正常語速 1.0x。開啟頁面不會自動產生音檔。</p>
+    <p class="hint">資料來自 KK 音標互動學習網站。女聲 Ava、男聲 Guy。播放與 ZIP 使用已匯入的 MP3，不會自動呼叫 Azure。</p>
     <p class="kk-ex-meta" id="kkExStats"></p>
     <div class="kk-ex-filters">
       <select id="kkExPhonemeFilter" aria-label="KK 音標分類"></select>
@@ -90,7 +90,8 @@
 <script src="js/kk-data.js?v=20261002-kk1"></script>
 <script src="js/kk.js?v=20261020-ex1"></script>
 <script src="js/kk-examples-data.js?v=20261020-ex2"></script>
-<script src="js/kk-examples.js?v=20261020-ex2"></script>
+<script src="js/kk-examples-audio.js?v=20261021-ex3"></script>
+<script src="js/kk-examples.js?v=20261021-ex3"></script>
 </main>
 <nav class="bottom-nav">
   <a class="bottom-nav-account" href="login.html" id="bottomAccountLink">

@@ -139,6 +139,9 @@
 
 .kk-ex-progress{
   margin:0 0 16px;
+  white-space:pre-wrap;
+  max-height:240px;
+  overflow:auto;
 }
 
 .kk-ex-progress-bar{

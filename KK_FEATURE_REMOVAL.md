@@ -10,10 +10,12 @@
 - `js/kk-data.js`
 - `js/kk-examples.js`
 - `js/kk-examples-data.js`
+- `js/kk-examples-audio.js`
 - `scripts/build-kk-examples-data.js`
+- `scripts/scan-kk-example-audio.js`
 - `assets/icons/kk-phonetic.svg`
 - `assets/icons/kkspeaker.svg`
-- `assets/kk/`（含 `audio/*.mp3` 與若有的 `kk-phonemes.zip`）
+- `assets/kk/`（含 `audio/*.mp3`、`examples/` 與若有的 `kk-phonemes.zip`）
 - `scripts/generate-kk-audio.js`
 - `KK_FEATURE_REMOVAL.md`（本檔）
 

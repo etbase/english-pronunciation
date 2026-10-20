@@ -1,8 +1,9 @@
 // TEMP KK PHONETIC FEATURE
-// 單字例句分頁：沿用 /api/tts（Azure Neural）。女聲 Ava、男聲 Guy，語速 1.0x。
-// 不自動批次產生。不使用瀏覽器內建語音。
+// 單字例句分頁：播放與 ZIP 使用 GitHub 已匯入的 MP3，其次使用瀏覽器 IndexedDB。
+// 不自動、不因 ZIP 呼叫 Azure。不使用瀏覽器內建語音。
 (function () {
   const data = window.KK_EXAMPLES;
+  const audioIndex = window.KK_EXAMPLES_AUDIO || {};
   const panel = document.getElementById('kkExamplesPanel');
   const listEl = document.getElementById('kkExList');
   if (!data || !panel || !listEl) return;
@@ -14,10 +15,14 @@
       { id: 'en-US-GuyNeural', label: '男聲' }
     ];
   const RATE = 1;
-  const CONCURRENCY = 2;
-  const MAX_RETRIES = 4;
+  const CONCURRENCY = 4;
   const DB_NAME = 'kk-examples-audio';
   const STORE = 'clips';
+  const AUDIO_BASE = audioIndex.base || 'assets/kk/examples/';
+  const VOICE_FOLDERS = audioIndex.folders || {
+    'en-US-AvaNeural': 'female',
+    'en-US-GuyNeural': 'male'
+  };
   const CRC_TABLE = (function () {
     const table = new Uint32Array(256);
     for (let i = 0; i < 256; i += 1) {
@@ -44,12 +49,27 @@
   let currentAudio = null;
   let playingKey = '';
   let statusMap = Object.create(null);
+  let memoryBlobs = Object.create(null);
   let dbPromise = null;
   const batch = {
     running: false,
     paused: false,
     stopped: false
   };
+
+  const repoSets = (function () {
+    const files = audioIndex.files || {};
+    const out = {};
+    Object.keys(VOICE_FOLDERS).forEach(function (voiceId) {
+      const folder = VOICE_FOLDERS[voiceId];
+      const group = files[folder] || {};
+      out[folder] = {
+        word: new Set(group.words || []),
+        sentence: new Set(group.sentences || [])
+      };
+    });
+    return out;
+  })();
 
   function cacheKey(kind, text, voice) {
     return [kind, voice, String(RATE), text].join('\n');
@@ -63,6 +83,25 @@
     return VOICES.find(function (voice) {
       return voice.id === id;
     }) || VOICES[0];
+  }
+
+  function voiceFolder(voiceId) {
+    return VOICE_FOLDERS[voiceId] || 'female';
+  }
+
+  function repoHas(item, voiceId) {
+    const group = repoSets[voiceFolder(voiceId)];
+    return !!(group && group[item.kind] && group[item.kind].has(item.fileName));
+  }
+
+  function repoPath(item, voiceId) {
+    const kindDir = item.kind === 'word' ? 'words' : 'sentences';
+    return AUDIO_BASE + voiceFolder(voiceId) + '/' + kindDir + '/' + item.fileName;
+  }
+
+  function repoUrl(item, voiceId) {
+    const kindDir = item.kind === 'word' ? 'words' : 'sentences';
+    return AUDIO_BASE + voiceFolder(voiceId) + '/' + kindDir + '/' + encodeURIComponent(item.fileName);
   }
 
   function setStatus(text) {
@@ -227,20 +266,6 @@
     });
   }
 
-  function idbPut(key, buffer) {
-    return openDb().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        const request = db.transaction(STORE, 'readwrite').objectStore(STORE).put(buffer, key);
-        request.onsuccess = function () {
-          resolve();
-        };
-        request.onerror = function () {
-          reject(request.error);
-        };
-      });
-    });
-  }
-
   function blobFromBuffer(buffer) {
     return new Blob([buffer], { type: 'audio/mpeg' });
   }
@@ -293,70 +318,44 @@
     if (group) group.classList.add('is-playing');
   }
 
-  function showLoginNeeded() {
-    setStatus('請先登入 Google 帳號，才能使用 Azure 語音產生音檔。');
-  }
-
-  function azureErrorMessage(error) {
-    const code = error && error.message;
-    if (code === 'LOGIN_REQUIRED') return '請先登入 Google 帳號。';
-    if (code === 'NOT_CONFIGURED') return '語音服務尚未設定。';
-    if (code === 'RATE_LIMITED') return 'Azure 目前忙碌，稍後會自動重試。';
-    return '音檔產生失敗。';
-  }
-
-  async function fetchAzureBlob(text, voice) {
-    if (typeof window.fetchStandardPronunciationBlob !== 'function') {
-      throw new Error('NOT_CONFIGURED');
-    }
-    return window.fetchStandardPronunciationBlob(text, { voice: voice });
-  }
-
-  async function loadCached(item, voice) {
-    const key = cacheKey(item.kind, item.text, voice);
-    const buffer = await idbGet(key);
-    if (!buffer) return null;
+  async function fetchRepoBlob(item, voiceId) {
+    const response = await fetch(repoUrl(item, voiceId));
+    if (response.status === 404) throw new Error('MISSING');
+    if (!response.ok) throw new Error('HTTP');
+    const buffer = await response.arrayBuffer();
+    if (!buffer || buffer.byteLength < 800) throw new Error('MISSING');
     return blobFromBuffer(buffer);
   }
 
-  async function generateItem(item, voice, force) {
-    const key = cacheKey(item.kind, item.text, voice);
-    if (!force) {
-      const cached = await loadCached(item, voice);
-      if (cached) {
-        statusMap[key] = 'ready';
-        paintItemStatus(key);
-        return cached;
-      }
+  async function loadExisting(item, voiceId) {
+    const key = cacheKey(item.kind, item.text, voiceId);
+    if (memoryBlobs[key]) {
+      statusMap[key] = 'ready';
+      paintItemStatus(key);
+      return memoryBlobs[key];
     }
-    statusMap[key] = 'busy';
-    paintItemStatus(key);
-    let lastError = null;
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
-      if (batch.stopped) throw new Error('STOPPED');
+    if (repoHas(item, voiceId)) {
       try {
-        const blob = await fetchAzureBlob(item.text, voice);
-        const buffer = await blob.arrayBuffer();
-        try {
-          await idbPut(key, buffer);
-        } catch (error) {
-          /* 快取失敗仍回傳音檔 */
-        }
+        const blob = await fetchRepoBlob(item, voiceId);
+        memoryBlobs[key] = blob;
         statusMap[key] = 'ready';
         paintItemStatus(key);
-        return blobFromBuffer(buffer);
+        return blob;
       } catch (error) {
-        lastError = error;
-        if (error && error.message === 'LOGIN_REQUIRED') throw error;
-        const retryable = error && (error.message === 'RATE_LIMITED' || error.message === 'TTS_HTTP');
-        if (!retryable || attempt === MAX_RETRIES) break;
-        const waitSec = error.retryAfter || Math.min(8, Math.pow(2, attempt));
-        await sleep(waitSec * 1000);
+        /* 清單有檔名但檔案讀不到時，再看 IndexedDB */
       }
     }
-    statusMap[key] = 'error';
+    const buffer = await idbGet(key);
+    if (buffer) {
+      const blob = blobFromBuffer(buffer);
+      memoryBlobs[key] = blob;
+      statusMap[key] = 'ready';
+      paintItemStatus(key);
+      return blob;
+    }
+    statusMap[key] = 'pending';
     paintItemStatus(key);
-    throw lastError || new Error('TTS_HTTP');
+    return null;
   }
 
   function paintItemStatus(key) {
@@ -366,7 +365,7 @@
     const state = statusMap[key] || 'pending';
     if (el) {
       el.className = 'kk-ex-status' + (state === 'ready' ? ' is-ready' : state === 'busy' ? ' is-busy' : state === 'error' ? ' is-error' : '');
-      el.textContent = state === 'ready' ? '已完成' : state === 'busy' ? '產生中' : state === 'error' ? '失敗' : '尚未產生';
+      el.textContent = state === 'ready' ? '已完成' : state === 'busy' ? '讀取中' : state === 'error' ? '缺少音檔' : '尚未匯入';
     }
     if (playingKey === key) group.classList.add('is-playing');
   }
@@ -376,8 +375,12 @@
     await Promise.all(VOICES.map(function (voice) {
       return Promise.all(items.map(function (item) {
         const key = cacheKey(item.kind, item.text, voice.id);
+        if (repoHas(item, voice.id)) {
+          statusMap[key] = 'ready';
+          return Promise.resolve();
+        }
         return idbGet(key).then(function (buffer) {
-          statusMap[key] = buffer ? 'ready' : (statusMap[key] === 'error' ? 'error' : 'pending');
+          statusMap[key] = buffer ? 'ready' : 'pending';
         });
       }));
     }));
@@ -457,7 +460,7 @@
 
     const status = document.createElement('span');
     status.className = 'kk-ex-status' + (state === 'ready' ? ' is-ready' : state === 'busy' ? ' is-busy' : state === 'error' ? ' is-error' : '');
-    status.textContent = state === 'ready' ? '已完成' : state === 'busy' ? '產生中' : state === 'error' ? '失敗' : '尚未產生';
+    status.textContent = state === 'ready' ? '已完成' : state === 'busy' ? '讀取中' : state === 'error' ? '缺少音檔' : '尚未匯入';
     group.appendChild(status);
 
     return group;
@@ -486,11 +489,24 @@
     return row;
   }
 
-  async function playItem(item, voice) {
-    const key = cacheKey(item.kind, item.text, voice);
+  function missingMessage(item, voiceId) {
+    const voice = voiceById(voiceId);
+    return '缺少音檔：' + repoPath(item, voiceId) + '（' + voice.label + '／' + item.fileName + '）';
+  }
+
+  async function playItem(item, voiceId) {
+    const key = cacheKey(item.kind, item.text, voiceId);
     try {
       stopLocalAudio();
-      const blob = await generateItem(item, voice, false);
+      statusMap[key] = 'busy';
+      paintItemStatus(key);
+      const blob = await loadExisting(item, voiceId);
+      if (!blob) {
+        statusMap[key] = 'error';
+        paintItemStatus(key);
+        setStatus(missingMessage(item, voiceId));
+        return;
+      }
       const objectUrl = URL.createObjectURL(blob);
       const audio = new Audio(objectUrl);
       currentAudio = audio;
@@ -511,30 +527,55 @@
       setStatus('');
     } catch (error) {
       markPlaying('');
-      if (error && error.message === 'LOGIN_REQUIRED') showLoginNeeded();
-      else setStatus(azureErrorMessage(error));
+      statusMap[key] = 'error';
+      paintItemStatus(key);
+      setStatus(missingMessage(item, voiceId));
     }
   }
 
-  async function downloadItem(item, voice) {
+  async function downloadItem(item, voiceId) {
+    const key = cacheKey(item.kind, item.text, voiceId);
     try {
-      const blob = await generateItem(item, voice, false);
+      statusMap[key] = 'busy';
+      paintItemStatus(key);
+      const blob = await loadExisting(item, voiceId);
+      if (!blob) {
+        statusMap[key] = 'error';
+        paintItemStatus(key);
+        setStatus(missingMessage(item, voiceId));
+        return;
+      }
       downloadBlob(blob, item.fileName);
       setStatus('');
     } catch (error) {
-      if (error && error.message === 'LOGIN_REQUIRED') showLoginNeeded();
-      else setStatus(azureErrorMessage(error));
+      statusMap[key] = 'error';
+      paintItemStatus(key);
+      setStatus(missingMessage(item, voiceId));
     }
   }
 
-  async function missingCount(voice) {
+  async function findMissing(voiceId) {
     const items = uniqueItems();
-    let missing = 0;
+    const missing = [];
+    const ready = [];
     for (let i = 0; i < items.length; i += 1) {
-      const cached = await loadCached(items[i], voice);
-      if (!cached) missing += 1;
+      const item = items[i];
+      if (repoHas(item, voiceId)) {
+        ready.push(item);
+        continue;
+      }
+      const buffer = await idbGet(cacheKey(item.kind, item.text, voiceId));
+      if (buffer) ready.push(item);
+      else missing.push(item);
     }
-    return { total: items.length, missing: missing, cached: items.length - missing };
+    return { items: items, missing: missing, ready: ready };
+  }
+
+  function formatMissingList(voice, missing) {
+    const lines = missing.map(function (item) {
+      return repoPath(item, voice.id);
+    });
+    return '缺少 ' + missing.length + ' 個' + voice.label + '音檔，無法打包 ZIP。缺少項目：\n' + lines.join('\n');
   }
 
   function setBatchButtons(running, paused) {
@@ -563,84 +604,52 @@
     await Promise.all(workers);
   }
 
-  async function generateMany(items, voice, label) {
-    if (batch.running) return { success: 0, failed: 0, failures: [], stopped: true };
+  async function zipVoice(voiceId) {
+    if (batch.running) return;
+    const voice = voiceById(voiceId);
+    const found = await findMissing(voice.id);
+    if (found.missing.length) {
+      setProgress(0, 0);
+      setStatus(formatMissingList(voice, found.missing));
+      return;
+    }
     batch.running = true;
     batch.paused = false;
     batch.stopped = false;
     setBatchButtons(true, false);
-    let success = 0;
+    const items = found.items;
+    const files = new Array(items.length);
+    let done = 0;
     let failed = 0;
     const failures = [];
-    const startMissing = [];
-    for (let i = 0; i < items.length; i += 1) {
-      const cached = await loadCached(items[i], voice);
-      if (cached) success += 1;
-      else startMissing.push(items[i]);
-    }
-    const total = items.length;
-    const remainingStart = startMissing.length;
-    setStatus((label || '批次產生') + '：已完成 ' + success + ' / ' + total + '（成功 ' + success + '、失敗 0、剩餘 ' + remainingStart + '）');
-    setProgress(success, total);
+    setStatus('打包' + voice.label + ' ZIP：已完成 0 / ' + items.length);
+    setProgress(0, items.length);
     try {
-      await runPool(startMissing, async function (item) {
+      await runPool(items, async function (item, index) {
         if (batch.stopped) return;
-        try {
-          await generateItem(item, voice, false);
-          success += 1;
-        } catch (error) {
-          if (error && error.message === 'LOGIN_REQUIRED') {
-            batch.stopped = true;
-            showLoginNeeded();
-            throw error;
-          }
+        const blob = await loadExisting(item, voice.id);
+        done += 1;
+        if (!blob) {
           failed += 1;
-          failures.push(item.text);
+          failures.push(repoPath(item, voice.id));
+          statusMap[cacheKey(item.kind, item.text, voice.id)] = 'error';
+          paintItemStatus(cacheKey(item.kind, item.text, voice.id));
+        } else {
+          const buffer = new Uint8Array(await blob.arrayBuffer());
+          const folder = item.kind === 'word' ? 'words/' : 'sentences/';
+          files[index] = { name: folder + item.fileName, data: buffer };
         }
-        const remaining = total - success - failed;
-        setStatus((label || '批次產生') + '：已完成 ' + (success + failed) + ' / ' + total + '（成功 ' + success + '、失敗 ' + failed + '、剩餘 ' + remaining + '）');
-        setProgress(success + failed, total);
+        setStatus('打包' + voice.label + ' ZIP：已完成 ' + done + ' / ' + items.length + '（成功 ' + (done - failed) + '、失敗 ' + failed + '、剩餘 ' + (items.length - done) + '）');
+        setProgress(done, items.length);
       });
-    } catch (error) {
-      if (!(error && error.message === 'LOGIN_REQUIRED')) {
-        setStatus(azureErrorMessage(error));
-      }
+    } finally {
+      batch.running = false;
+      setBatchButtons(false, false);
     }
-    batch.running = false;
-    setBatchButtons(false, false);
-    if (failures.length) {
-      setStatus('完成。成功 ' + success + '、失敗 ' + failed + '。失敗項目：' + failures.slice(0, 8).join('、') + (failures.length > 8 ? '…' : ''));
-    } else if (!batch.stopped) {
-      setStatus('完成。成功 ' + success + '、失敗 0。');
-    }
-    return { success: success, failed: failed, failures: failures, stopped: batch.stopped };
-  }
-
-  async function zipVoice(voiceId) {
-    const voice = voiceById(voiceId);
-    const items = uniqueItems();
-    const counts = await missingCount(voice.id);
-    if (counts.missing > 0) {
-      const ok = window.confirm('將呼叫 Azure 新產生 ' + counts.missing + ' 個' + voice.label + '音檔（已有快取 ' + counts.cached + ' 個）。確定繼續？');
-      if (!ok) return;
-    }
-    const result = await generateMany(items, voice.id, '準備' + voice.label + ' ZIP');
-    if (result.stopped) return;
-    if (result.failed) {
-      setStatus('有 ' + result.failed + ' 個' + voice.label + '音檔失敗，已中止打包，避免假裝全部成功。失敗項目：' + result.failures.slice(0, 8).join('、') + (result.failures.length > 8 ? '…' : ''));
+    if (batch.stopped) return;
+    if (failed) {
+      setStatus('有 ' + failed + ' 個' + voice.label + '音檔缺少，已中止打包。缺少項目：\n' + failures.join('\n'));
       return;
-    }
-    const files = [];
-    for (let i = 0; i < items.length; i += 1) {
-      const item = items[i];
-      const blob = await loadCached(item, voice.id);
-      if (!blob) {
-        setStatus('打包時發現缺檔：' + item.text);
-        return;
-      }
-      const buffer = new Uint8Array(await blob.arrayBuffer());
-      const folder = item.kind === 'word' ? 'words/' : 'sentences/';
-      files.push({ name: folder + item.fileName, data: buffer });
     }
     const zipName = 'KK_Words_Sentences_' + voice.label + '.zip';
     downloadBlob(buildZip(files), zipName);
@@ -671,10 +680,15 @@
     });
   }
 
+  function repoCount(folder) {
+    const files = (audioIndex.files && audioIndex.files[folder]) || {};
+    return (files.words || []).length + (files.sentences || []).length;
+  }
+
   function renderStats() {
     if (!statsEl) return;
     const s = data.stats;
-    statsEl.textContent = '音標分類 ' + s.phonemes + '（母音 ' + s.vowels + '、子音 ' + s.consonants + '）　單字 ' + s.wordRows + '（不重複 ' + s.uniqueWords + '）　例句 ' + s.sentenceRows + '（不重複 ' + s.uniqueSentences + '）　每種聲音預計 MP3 ' + s.uniqueMp3 + '　女聲 Ava／男聲 Guy　語速 1.0x';
+    statsEl.textContent = '音標分類 ' + s.phonemes + '（母音 ' + s.vowels + '、子音 ' + s.consonants + '）　單字 ' + s.wordRows + '（不重複 ' + s.uniqueWords + '）　例句 ' + s.sentenceRows + '（不重複 ' + s.uniqueSentences + '）　每種聲音應有 MP3 ' + s.uniqueMp3 + '　儲存庫女聲 ' + repoCount('female') + '、男聲 ' + repoCount('male');
   }
 
   if (tabPhonemes) tabPhonemes.addEventListener('click', function () {
