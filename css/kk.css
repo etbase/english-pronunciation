@@ -125,10 +125,9 @@
   margin:0 0 16px;
 }
 
-.kk-ex-filters .input,
 .kk-ex-filters select{
   min-width:0;
-  flex:1 1 160px;
+  flex:0 1 280px;
   max-width:280px;
   border:1px solid var(--line);
   border-radius:16px;
@@ -221,6 +220,45 @@
   padding:8px 14px;
 }
 
+.kk-ex-voices{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-left:auto;
+}
+
+.kk-ex-voice{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.kk-ex-play-btn{
+  display:inline-flex;
+  flex-direction:row;
+  align-items:center;
+  gap:6px;
+  min-height:42px;
+  font-size:13px;
+  padding:8px 12px;
+}
+
+.kk-ex-play-btn img{
+  width:16px;
+  height:16px;
+  filter:var(--icon-tint);
+}
+
+.kk-ex-play-btn:hover img{
+  filter:var(--teal-icon-tint);
+}
+
+.kk-ex-voice.is-playing{
+  background:#eef1f5;
+  border-radius:14px;
+  padding:2px 4px;
+}
+
 @media(max-width:1100px){
   .kk-columns{
     grid-template-columns:1fr;
@@ -233,12 +271,12 @@
     min-width:0;
     font-size:20px;
   }
-  .kk-ex-filters .input,
   .kk-ex-filters select{
     max-width:none;
-    flex-basis:100%;
+    flex:1 1 100%;
   }
-  .kk-ex-actions{
+  .kk-ex-actions,
+  .kk-ex-voices{
     margin-left:0;
     width:100%;
   }

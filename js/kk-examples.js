@@ -1,5 +1,5 @@
 // TEMP KK PHONETIC FEATURE
-// 單字例句分頁：沿用 /api/tts（Azure Neural），預設 en-US-AndrewNeural。
+// 單字例句分頁：沿用 /api/tts（Azure Neural）。女聲 Ava、男聲 Guy，語速 1.0x。
 // 不自動批次產生。不使用瀏覽器內建語音。
 (function () {
   const data = window.KK_EXAMPLES;
@@ -7,14 +7,12 @@
   const listEl = document.getElementById('kkExList');
   if (!data || !panel || !listEl) return;
 
-  const VOICES = [
-    { id: 'en-US-AvaNeural', label: 'Ava' },
-    { id: 'en-US-JennyNeural', label: 'Jenny' },
-    { id: 'en-US-AriaNeural', label: 'Aria' },
-    { id: 'en-US-AndrewNeural', label: 'Andrew' },
-    { id: 'en-US-GuyNeural', label: 'Guy' }
-  ];
-  const DEFAULT_VOICE = data.voiceDefault || 'en-US-AndrewNeural';
+  const VOICES = (data.voices && data.voices.length)
+    ? data.voices
+    : [
+      { id: 'en-US-AvaNeural', label: '女聲' },
+      { id: 'en-US-GuyNeural', label: '男聲' }
+    ];
   const RATE = 1;
   const CONCURRENCY = 2;
   const MAX_RETRIES = 4;
@@ -36,18 +34,15 @@
   const tabExamples = document.getElementById('kkTabExamples');
   const phonemePanel = document.getElementById('kkPhonemePanel');
   const statsEl = document.getElementById('kkExStats');
-  const voiceRow = document.getElementById('kkExVoiceRow');
-  const typeFilter = document.getElementById('kkExTypeFilter');
   const phonemeFilter = document.getElementById('kkExPhonemeFilter');
-  const searchInput = document.getElementById('kkExSearch');
   const statusEl = document.getElementById('kkExStatus');
   const progressBar = document.getElementById('kkExProgressBar');
   const progressFill = document.getElementById('kkExProgressFill');
   const pauseBtn = document.getElementById('kkExPause');
   const resumeBtn = document.getElementById('kkExResume');
 
-  let currentVoice = DEFAULT_VOICE;
   let currentAudio = null;
+  let playingKey = '';
   let statusMap = Object.create(null);
   let dbPromise = null;
   const batch = {
@@ -57,11 +52,17 @@
   };
 
   function cacheKey(kind, text, voice) {
-    return [kind, voice || currentVoice, String(RATE), text].join('\n');
+    return [kind, voice, String(RATE), text].join('\n');
   }
 
   function itemAttr(key) {
     return encodeURIComponent(key);
+  }
+
+  function voiceById(id) {
+    return VOICES.find(function (voice) {
+      return voice.id === id;
+    }) || VOICES[0];
   }
 
   function setStatus(text) {
@@ -129,8 +130,8 @@
     let offset = 0;
     files.forEach(function (file) {
       const nameBytes = encoder.encode(file.name);
-      const data = file.data;
-      const crc = crc32(data);
+      const dataBytes = file.data;
+      const crc = crc32(dataBytes);
       const local = concatBytes([
         u32(0x04034b50),
         u16(20),
@@ -139,12 +140,12 @@
         u16(0),
         u16(0),
         u32(crc),
-        u32(data.length),
-        u32(data.length),
+        u32(dataBytes.length),
+        u32(dataBytes.length),
         u16(nameBytes.length),
         u16(0),
         nameBytes,
-        data
+        dataBytes
       ]);
       const central = concatBytes([
         u32(0x02014b50),
@@ -155,8 +156,8 @@
         u16(0),
         u16(0),
         u32(crc),
-        u32(data.length),
-        u32(data.length),
+        u32(dataBytes.length),
+        u32(dataBytes.length),
         u16(nameBytes.length),
         u16(0),
         u16(0),
@@ -257,14 +258,12 @@
     }, 1000);
   }
 
-  function uniqueItems(kind) {
-    if (kind === 'word') return data.uniqueWords.map(function (item) {
+  function uniqueItems() {
+    return data.uniqueWords.map(function (item) {
       return { kind: 'word', text: item.text, fileName: item.fileName, phonemes: item.phonemes };
-    });
-    if (kind === 'sentence') return data.uniqueSentences.map(function (item) {
+    }).concat(data.uniqueSentences.map(function (item) {
       return { kind: 'sentence', text: item.text, fileName: item.fileName, phonemes: item.phonemes };
-    });
-    return uniqueItems('word').concat(uniqueItems('sentence'));
+    }));
   }
 
   function stopLocalAudio() {
@@ -272,12 +271,26 @@
       currentAudio.pause();
       currentAudio = null;
     }
+    playingKey = '';
+    listEl.querySelectorAll('.kk-ex-voice.is-playing').forEach(function (el) {
+      el.classList.remove('is-playing');
+    });
     if (typeof window.stopKkPhonemePlayback === 'function') {
       window.stopKkPhonemePlayback();
     }
     if (typeof window.stopStandardPronunciation === 'function') {
       window.stopStandardPronunciation();
     }
+  }
+
+  function markPlaying(key) {
+    listEl.querySelectorAll('.kk-ex-voice.is-playing').forEach(function (el) {
+      el.classList.remove('is-playing');
+    });
+    playingKey = key || '';
+    if (!key) return;
+    const group = listEl.querySelector('[data-cache-key="' + itemAttr(key) + '"]');
+    if (group) group.classList.add('is-playing');
   }
 
   function showLoginNeeded() {
@@ -292,26 +305,27 @@
     return '音檔產生失敗。';
   }
 
-  async function fetchAzureBlob(text) {
+  async function fetchAzureBlob(text, voice) {
     if (typeof window.fetchStandardPronunciationBlob !== 'function') {
       throw new Error('NOT_CONFIGURED');
     }
-    return window.fetchStandardPronunciationBlob(text, { voice: currentVoice });
+    return window.fetchStandardPronunciationBlob(text, { voice: voice });
   }
 
-  async function loadCached(item) {
-    const key = cacheKey(item.kind, item.text, currentVoice);
+  async function loadCached(item, voice) {
+    const key = cacheKey(item.kind, item.text, voice);
     const buffer = await idbGet(key);
     if (!buffer) return null;
     return blobFromBuffer(buffer);
   }
 
-  async function generateItem(item, force) {
-    const key = cacheKey(item.kind, item.text, currentVoice);
+  async function generateItem(item, voice, force) {
+    const key = cacheKey(item.kind, item.text, voice);
     if (!force) {
-      const cached = await loadCached(item);
+      const cached = await loadCached(item, voice);
       if (cached) {
         statusMap[key] = 'ready';
+        paintItemStatus(key);
         return cached;
       }
     }
@@ -321,7 +335,7 @@
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
       if (batch.stopped) throw new Error('STOPPED');
       try {
-        const blob = await fetchAzureBlob(item.text);
+        const blob = await fetchAzureBlob(item.text, voice);
         const buffer = await blob.arrayBuffer();
         try {
           await idbPut(key, buffer);
@@ -346,47 +360,44 @@
   }
 
   function paintItemStatus(key) {
-    const row = listEl.querySelector('[data-cache-key="' + itemAttr(key) + '"]');
-    if (!row) return;
-    const el = row.querySelector('.kk-ex-status');
-    const genBtn = row.querySelector('.kk-ex-actions .btn-compact');
+    const group = listEl.querySelector('[data-cache-key="' + itemAttr(key) + '"]');
+    if (!group) return;
+    const el = group.querySelector('.kk-ex-status');
     const state = statusMap[key] || 'pending';
     if (el) {
       el.className = 'kk-ex-status' + (state === 'ready' ? ' is-ready' : state === 'busy' ? ' is-busy' : state === 'error' ? ' is-error' : '');
       el.textContent = state === 'ready' ? '已完成' : state === 'busy' ? '產生中' : state === 'error' ? '失敗' : '尚未產生';
     }
-    if (genBtn) genBtn.textContent = state === 'ready' ? '重新產生' : '產生音檔';
+    if (playingKey === key) group.classList.add('is-playing');
   }
 
   async function refreshStatuses() {
-    const items = uniqueItems('all');
-    await Promise.all(items.map(function (item) {
-      const key = cacheKey(item.kind, item.text, currentVoice);
-      return idbGet(key).then(function (buffer) {
-        statusMap[key] = buffer ? 'ready' : (statusMap[key] === 'error' ? 'error' : 'pending');
-      });
+    const items = uniqueItems();
+    await Promise.all(VOICES.map(function (voice) {
+      return Promise.all(items.map(function (item) {
+        const key = cacheKey(item.kind, item.text, voice.id);
+        return idbGet(key).then(function (buffer) {
+          statusMap[key] = buffer ? 'ready' : (statusMap[key] === 'error' ? 'error' : 'pending');
+        });
+      }));
     }));
     renderList();
   }
 
   function visibleGroups() {
-    const type = typeFilter ? typeFilter.value : 'all';
     const phoneme = phonemeFilter ? phonemeFilter.value : 'all';
-    const query = searchInput ? String(searchInput.value || '').trim().toLowerCase() : '';
     return data.phonemes.map(function (entry) {
       if (phoneme !== 'all' && entry.symbol !== phoneme) return null;
-      const words = type === 'sentence' ? [] : entry.words.filter(function (item) {
-        return !query || item.text.toLowerCase().indexOf(query) !== -1;
-      }).map(function (item) {
-        return { kind: 'word', text: item.text, fileName: item.fileName, symbol: entry.symbol };
-      });
-      const sentences = type === 'word' ? [] : entry.sentences.filter(function (item) {
-        return !query || item.text.toLowerCase().indexOf(query) !== -1;
-      }).map(function (item) {
-        return { kind: 'sentence', text: item.text, fileName: item.fileName, symbol: entry.symbol };
-      });
-      if (!words.length && !sentences.length) return null;
-      return { symbol: entry.symbol, kind: entry.kind, words: words, sentences: sentences };
+      return {
+        symbol: entry.symbol,
+        kind: entry.kind,
+        words: entry.words.map(function (item) {
+          return { kind: 'word', text: item.text, fileName: item.fileName, symbol: entry.symbol };
+        }),
+        sentences: entry.sentences.map(function (item) {
+          return { kind: 'sentence', text: item.text, fileName: item.fileName, symbol: entry.symbol };
+        })
+      };
     }).filter(Boolean);
   }
 
@@ -417,12 +428,44 @@
     });
   }
 
-  function renderRow(item) {
-    const key = cacheKey(item.kind, item.text, currentVoice);
+  function renderVoiceControls(item, voice) {
+    const key = cacheKey(item.kind, item.text, voice.id);
     const state = statusMap[key] || 'pending';
+    const group = document.createElement('div');
+    group.className = 'kk-ex-voice' + (playingKey === key ? ' is-playing' : '');
+    group.setAttribute('data-cache-key', itemAttr(key));
+
+    const playBtn = document.createElement('button');
+    playBtn.type = 'button';
+    playBtn.className = 'primary-btn btn-outline btn-compact kk-ex-play-btn';
+    playBtn.setAttribute('aria-label', '播放' + voice.label);
+    playBtn.innerHTML = '<img src="assets/icons/kkspeaker.svg" alt="">' + voice.label;
+    playBtn.addEventListener('click', function () {
+      playItem(item, voice.id);
+    });
+    group.appendChild(playBtn);
+
+    const downloadBtn = document.createElement('button');
+    downloadBtn.type = 'button';
+    downloadBtn.className = 'small-btn btn-outline kk-icon-btn';
+    downloadBtn.setAttribute('aria-label', '下載' + voice.label);
+    downloadBtn.innerHTML = '<img src="assets/icons/download.svg" alt="">';
+    downloadBtn.addEventListener('click', function () {
+      downloadItem(item, voice.id);
+    });
+    group.appendChild(downloadBtn);
+
+    const status = document.createElement('span');
+    status.className = 'kk-ex-status' + (state === 'ready' ? ' is-ready' : state === 'busy' ? ' is-busy' : state === 'error' ? ' is-error' : '');
+    status.textContent = state === 'ready' ? '已完成' : state === 'busy' ? '產生中' : state === 'error' ? '失敗' : '尚未產生';
+    group.appendChild(status);
+
+    return group;
+  }
+
+  function renderRow(item) {
     const row = document.createElement('div');
     row.className = 'kk-row kk-ex-row';
-    row.setAttribute('data-cache-key', itemAttr(key));
 
     const kind = document.createElement('span');
     kind.className = 'kk-ex-kind';
@@ -434,78 +477,48 @@
     text.textContent = item.text;
     row.appendChild(text);
 
-    const status = document.createElement('span');
-    status.className = 'kk-ex-status' + (state === 'ready' ? ' is-ready' : state === 'busy' ? ' is-busy' : state === 'error' ? ' is-error' : '');
-    status.textContent = state === 'ready' ? '已完成' : state === 'busy' ? '產生中' : state === 'error' ? '失敗' : '尚未產生';
-    row.appendChild(status);
-
     const actions = document.createElement('div');
-    actions.className = 'kk-ex-actions';
-
-    const playBtn = document.createElement('button');
-    playBtn.type = 'button';
-    playBtn.className = 'small-btn kk-icon-btn';
-    playBtn.setAttribute('aria-label', '播放');
-    playBtn.innerHTML = '<img src="assets/icons/kkspeaker.svg" alt="">';
-    playBtn.addEventListener('click', function () {
-      playItem(item);
+    actions.className = 'kk-ex-voices';
+    VOICES.forEach(function (voice) {
+      actions.appendChild(renderVoiceControls(item, voice));
     });
-    actions.appendChild(playBtn);
-
-    const genBtn = document.createElement('button');
-    genBtn.type = 'button';
-    genBtn.className = 'primary-btn btn-outline btn-compact';
-    genBtn.textContent = state === 'ready' ? '重新產生' : '產生音檔';
-    genBtn.addEventListener('click', function () {
-      generateItem(item, true).then(function () {
-        setStatus('');
-      }).catch(function (error) {
-        if (error && error.message === 'LOGIN_REQUIRED') showLoginNeeded();
-        else setStatus(azureErrorMessage(error));
-      });
-    });
-    actions.appendChild(genBtn);
-
-    const downloadBtn = document.createElement('button');
-    downloadBtn.type = 'button';
-    downloadBtn.className = 'small-btn btn-outline kk-icon-btn';
-    downloadBtn.setAttribute('aria-label', '下載');
-    downloadBtn.innerHTML = '<img src="assets/icons/download.svg" alt="">';
-    downloadBtn.addEventListener('click', function () {
-      downloadItem(item);
-    });
-    actions.appendChild(downloadBtn);
-
     row.appendChild(actions);
     return row;
   }
 
-  async function playItem(item) {
+  async function playItem(item, voice) {
+    const key = cacheKey(item.kind, item.text, voice);
     try {
       stopLocalAudio();
-      const blob = await generateItem(item, false);
+      const blob = await generateItem(item, voice, false);
       const objectUrl = URL.createObjectURL(blob);
       const audio = new Audio(objectUrl);
       currentAudio = audio;
+      markPlaying(key);
       audio.onended = function () {
         URL.revokeObjectURL(objectUrl);
-        if (currentAudio === audio) currentAudio = null;
+        if (currentAudio === audio) {
+          currentAudio = null;
+          markPlaying('');
+        }
       };
       audio.onerror = function () {
         URL.revokeObjectURL(objectUrl);
+        markPlaying('');
         setStatus('這個音檔暫時無法播放。');
       };
       await audio.play();
       setStatus('');
     } catch (error) {
+      markPlaying('');
       if (error && error.message === 'LOGIN_REQUIRED') showLoginNeeded();
       else setStatus(azureErrorMessage(error));
     }
   }
 
-  async function downloadItem(item) {
+  async function downloadItem(item, voice) {
     try {
-      const blob = await generateItem(item, false);
+      const blob = await generateItem(item, voice, false);
       downloadBlob(blob, item.fileName);
       setStatus('');
     } catch (error) {
@@ -514,11 +527,11 @@
     }
   }
 
-  async function missingCount(kind) {
-    const items = uniqueItems(kind);
+  async function missingCount(voice) {
+    const items = uniqueItems();
     let missing = 0;
     for (let i = 0; i < items.length; i += 1) {
-      const cached = await loadCached(items[i]);
+      const cached = await loadCached(items[i], voice);
       if (!cached) missing += 1;
     }
     return { total: items.length, missing: missing, cached: items.length - missing };
@@ -550,8 +563,8 @@
     await Promise.all(workers);
   }
 
-  async function generateMany(items, label) {
-    if (batch.running) return;
+  async function generateMany(items, voice, label) {
+    if (batch.running) return { success: 0, failed: 0, failures: [], stopped: true };
     batch.running = true;
     batch.paused = false;
     batch.stopped = false;
@@ -561,7 +574,7 @@
     const failures = [];
     const startMissing = [];
     for (let i = 0; i < items.length; i += 1) {
-      const cached = await loadCached(items[i]);
+      const cached = await loadCached(items[i], voice);
       if (cached) success += 1;
       else startMissing.push(items[i]);
     }
@@ -573,7 +586,7 @@
       await runPool(startMissing, async function (item) {
         if (batch.stopped) return;
         try {
-          await generateItem(item, false);
+          await generateItem(item, voice, false);
           success += 1;
         } catch (error) {
           if (error && error.message === 'LOGIN_REQUIRED') {
@@ -603,23 +616,24 @@
     return { success: success, failed: failed, failures: failures, stopped: batch.stopped };
   }
 
-  async function zipKind(kind) {
-    const items = uniqueItems(kind);
-    const counts = await missingCount(kind);
+  async function zipVoice(voiceId) {
+    const voice = voiceById(voiceId);
+    const items = uniqueItems();
+    const counts = await missingCount(voice.id);
     if (counts.missing > 0) {
-      const ok = window.confirm('將呼叫 Azure 新產生 ' + counts.missing + ' 個音檔（已有快取 ' + counts.cached + ' 個）。確定繼續？');
+      const ok = window.confirm('將呼叫 Azure 新產生 ' + counts.missing + ' 個' + voice.label + '音檔（已有快取 ' + counts.cached + ' 個）。確定繼續？');
       if (!ok) return;
     }
-    const result = await generateMany(items, '準備 ZIP');
+    const result = await generateMany(items, voice.id, '準備' + voice.label + ' ZIP');
     if (result.stopped) return;
     if (result.failed) {
-      setStatus('有 ' + result.failed + ' 個音檔失敗，已中止打包，避免假裝全部成功。失敗項目：' + result.failures.slice(0, 8).join('、') + (result.failures.length > 8 ? '…' : ''));
+      setStatus('有 ' + result.failed + ' 個' + voice.label + '音檔失敗，已中止打包，避免假裝全部成功。失敗項目：' + result.failures.slice(0, 8).join('、') + (result.failures.length > 8 ? '…' : ''));
       return;
     }
     const files = [];
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
-      const blob = await loadCached(item);
+      const blob = await loadCached(item, voice.id);
       if (!blob) {
         setStatus('打包時發現缺檔：' + item.text);
         return;
@@ -628,7 +642,7 @@
       const folder = item.kind === 'word' ? 'words/' : 'sentences/';
       files.push({ name: folder + item.fileName, data: buffer });
     }
-    const zipName = kind === 'word' ? 'KK_Words.zip' : kind === 'sentence' ? 'KK_Sentences.zip' : 'KK_Words_Sentences.zip';
+    const zipName = 'KK_Words_Sentences_' + voice.label + '.zip';
     downloadBlob(buildZip(files), zipName);
     setStatus('ZIP 已下載：' + zipName + '（' + files.length + ' 個 MP3）。');
   }
@@ -646,24 +660,6 @@
     }
   }
 
-  function renderVoiceRow() {
-    if (!voiceRow) return;
-    voiceRow.innerHTML = '';
-    VOICES.forEach(function (voice) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'voice-btn' + (voice.id === currentVoice ? ' selected' : '');
-      button.setAttribute('aria-pressed', voice.id === currentVoice ? 'true' : 'false');
-      button.textContent = voice.label;
-      button.addEventListener('click', function () {
-        currentVoice = voice.id;
-        renderVoiceRow();
-        refreshStatuses();
-      });
-      voiceRow.appendChild(button);
-    });
-  }
-
   function renderPhonemeFilter() {
     if (!phonemeFilter) return;
     phonemeFilter.innerHTML = '<option value="all">全部音標</option>';
@@ -678,7 +674,7 @@
   function renderStats() {
     if (!statsEl) return;
     const s = data.stats;
-    statsEl.textContent = '音標分類 ' + s.phonemes + '（母音 ' + s.vowels + '、子音 ' + s.consonants + '）　單字 ' + s.wordRows + '（不重複 ' + s.uniqueWords + '）　例句 ' + s.sentenceRows + '（不重複 ' + s.uniqueSentences + '）　預計 MP3 ' + s.uniqueMp3 + '　語音 en-US-AndrewNeural　語速 1.0x';
+    statsEl.textContent = '音標分類 ' + s.phonemes + '（母音 ' + s.vowels + '、子音 ' + s.consonants + '）　單字 ' + s.wordRows + '（不重複 ' + s.uniqueWords + '）　例句 ' + s.sentenceRows + '（不重複 ' + s.uniqueSentences + '）　每種聲音預計 MP3 ' + s.uniqueMp3 + '　女聲 Ava／男聲 Guy　語速 1.0x';
   }
 
   if (tabPhonemes) tabPhonemes.addEventListener('click', function () {
@@ -687,20 +683,14 @@
   if (tabExamples) tabExamples.addEventListener('click', function () {
     showTab('examples');
   });
-  if (typeFilter) typeFilter.addEventListener('change', renderList);
   if (phonemeFilter) phonemeFilter.addEventListener('change', renderList);
-  if (searchInput) searchInput.addEventListener('input', renderList);
-  const zipAll = document.getElementById('kkExZipAll');
-  const zipWords = document.getElementById('kkExZipWords');
-  const zipSentences = document.getElementById('kkExZipSentences');
-  if (zipAll) zipAll.addEventListener('click', function () {
-    zipKind('all');
+  const zipFemale = document.getElementById('kkExZipFemale');
+  const zipMale = document.getElementById('kkExZipMale');
+  if (zipFemale) zipFemale.addEventListener('click', function () {
+    zipVoice('en-US-AvaNeural');
   });
-  if (zipWords) zipWords.addEventListener('click', function () {
-    zipKind('word');
-  });
-  if (zipSentences) zipSentences.addEventListener('click', function () {
-    zipKind('sentence');
+  if (zipMale) zipMale.addEventListener('click', function () {
+    zipVoice('en-US-GuyNeural');
   });
   if (pauseBtn) pauseBtn.addEventListener('click', function () {
     batch.paused = true;
@@ -713,7 +703,6 @@
   });
 
   renderStats();
-  renderVoiceRow();
   renderPhonemeFilter();
   renderList();
   refreshStatuses();

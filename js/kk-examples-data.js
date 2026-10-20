@@ -4,7 +4,11 @@
 (function (global) {
   global.KK_EXAMPLES = {
   "source": "https://etbase.github.io/kk-phonetic-learning/",
-  "voiceDefault": "en-US-AndrewNeural",
+  "voices": [
+    { "id": "en-US-AvaNeural", "label": "女聲" },
+    { "id": "en-US-GuyNeural", "label": "男聲" }
+  ],
+  "voiceDefault": "en-US-AvaNeural",
   "rate": 1,
   "stats": {
     "phonemes": 41,
