@@ -8,6 +8,9 @@
 - `css/kk.css`
 - `js/kk.js`
 - `js/kk-data.js`
+- `js/kk-examples.js`
+- `js/kk-examples-data.js`
+- `scripts/build-kk-examples-data.js`
 - `assets/icons/kk-phonetic.svg`
 - `assets/icons/kkspeaker.svg`
 - `assets/kk/`（含 `audio/*.mp3` 與若有的 `kk-phonemes.zip`）
@@ -48,4 +51,6 @@ Desktop 左下角「使用說明」本來就一直留著，刪 KK 時不要動�
 - 自由練習、課程學習、歷史紀錄、個人頁
 - 發音分析、錄音、Firebase、既有 Azure `/api/tts` 與 `/api/assess`
 
-KK 沒有把邏輯寫進 `js/app.js`、`js/tts.js` 或 Azure Function。
+KK 音標靜態播放沒有寫進 `js/app.js` 或 Azure Function。
+
+單字例句分頁會呼叫既有 `js/tts.js` 的 `fetchStandardPronunciationBlob`（沿用 `/api/tts`）。刪除 KK 時不必還原 Azure Function；若只刪單字例句，可選擇是否保留這個 TTS blob 介面。

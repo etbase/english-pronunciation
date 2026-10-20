@@ -241,4 +241,5 @@
   }
 
   window.addEventListener('pagehide', stopPlayback);
+  window.stopKkPhonemePlayback = stopPlayback;
 })();

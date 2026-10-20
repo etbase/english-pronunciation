@@ -86,6 +86,141 @@
   filter:var(--teal-icon-tint);
 }
 
+.kk-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 20px;
+}
+
+.kk-tab{
+  min-height:auto;
+  padding:10px 16px;
+  border-radius:16px;
+  border:1px solid var(--line);
+  background:white;
+  color:var(--muted);
+  font-size:14px;
+  font-weight:500;
+  flex-direction:row;
+}
+
+.kk-tab.active,
+.kk-tab:hover{
+  background:#eef1f5;
+  color:var(--text);
+}
+
+.kk-ex-meta{
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.6;
+  margin:0 0 16px;
+}
+
+.kk-ex-filters{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:0 0 16px;
+}
+
+.kk-ex-filters .input,
+.kk-ex-filters select{
+  min-width:0;
+  flex:1 1 160px;
+  max-width:280px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:12px 14px;
+  font-size:15px;
+  color:var(--text);
+  background:white;
+}
+
+.kk-ex-progress{
+  margin:0 0 16px;
+}
+
+.kk-ex-progress-bar{
+  height:8px;
+  border-radius:999px;
+  background:var(--mint);
+  overflow:hidden;
+  margin-top:8px;
+}
+
+.kk-ex-progress-fill{
+  height:100%;
+  width:0;
+  background:var(--teal);
+  border-radius:999px;
+}
+
+.kk-ex-group{
+  margin-top:22px;
+}
+
+.kk-ex-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.kk-ex-text{
+  flex:1 1 180px;
+  min-width:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16px;
+  font-weight:700;
+  color:var(--text);
+}
+
+.kk-ex-kind{
+  flex-shrink:0;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:500;
+}
+
+.kk-ex-status{
+  flex-shrink:0;
+  border-radius:999px;
+  padding:4px 10px;
+  font-size:12px;
+  font-weight:700;
+  background:#eef1f5;
+  color:var(--muted);
+}
+
+.kk-ex-status.is-ready{
+  background:var(--mint);
+  color:var(--teal-dark);
+}
+
+.kk-ex-status.is-busy{
+  background:#eef7ff;
+  color:var(--text);
+}
+
+.kk-ex-status.is-error{
+  background:#fce3e3;
+  color:#c23b3b;
+}
+
+.kk-ex-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-left:auto;
+}
+
+.kk-ex-actions .btn-compact{
+  font-size:13px;
+  padding:8px 14px;
+}
+
 @media(max-width:1100px){
   .kk-columns{
     grid-template-columns:1fr;
@@ -97,5 +232,14 @@
   .kk-symbol{
     min-width:0;
     font-size:20px;
+  }
+  .kk-ex-filters .input,
+  .kk-ex-filters select{
+    max-width:none;
+    flex-basis:100%;
+  }
+  .kk-ex-actions{
+    margin-left:0;
+    width:100%;
   }
 }

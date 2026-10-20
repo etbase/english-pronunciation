@@ -93,7 +93,17 @@
     global.speechSynthesis.speak(utter);
   }
 
-  async function fetchTtsAudio(text, voice, apiUrl){
+  function ttsError(code, extra){
+    const error = new Error(code);
+    if(extra){
+      Object.keys(extra).forEach(function(key){
+        error[key] = extra[key];
+      });
+    }
+    return error;
+  }
+
+  async function requestTtsBlob(text, voice, apiUrl){
     const headers = global.Auth && typeof Auth.authHeaders === 'function'
       ? await Auth.authHeaders({ 'Content-Type': 'application/json' })
       : { 'Content-Type': 'application/json' };
@@ -103,16 +113,38 @@
       body: JSON.stringify({ text, voice })
     });
     if(response.status === 401){
-      throw new Error('LOGIN_REQUIRED');
+      throw ttsError('LOGIN_REQUIRED');
+    }
+    if(response.status === 429){
+      const retryAfter = Number(response.headers.get('Retry-After'));
+      throw ttsError('RATE_LIMITED', { retryAfter: retryAfter > 0 ? retryAfter : 2, status: 429 });
     }
     if(!response.ok){
-      throw new Error('tts-http');
+      throw ttsError('TTS_HTTP', { status: response.status });
     }
-    const blob = await response.blob();
-    if(!blob || !blob.size){
-      throw new Error('tts-empty');
+    const buffer = await response.arrayBuffer();
+    if(!buffer || !buffer.byteLength){
+      throw ttsError('TTS_EMPTY');
     }
+    return new Blob([buffer], { type: 'audio/mpeg' });
+  }
+
+  async function fetchTtsAudio(text, voice, apiUrl){
+    const blob = await requestTtsBlob(text, voice, apiUrl);
     return URL.createObjectURL(blob);
+  }
+
+  async function fetchStandardPronunciationBlob(text, options){
+    const trimmed = String(text || '').trim();
+    if(!trimmed){
+      throw ttsError('EMPTY');
+    }
+    const voice = (options && options.voice) || DEFAULT_VOICE;
+    const apiUrl = getApiUrl();
+    if(!apiUrl){
+      throw ttsError('NOT_CONFIGURED');
+    }
+    return requestTtsBlob(trimmed, voice, apiUrl);
   }
 
   function getCachedOrFetch(text, voice, apiUrl){
@@ -163,4 +195,5 @@
   global.speakStandardPronunciation = speakStandardPronunciation;
   global.stopStandardPronunciation = stopStandardPronunciation;
   global.setStandardPronunciationRate = setStandardPronunciationRate;
+  global.fetchStandardPronunciationBlob = fetchStandardPronunciationBlob;
 })(window);
