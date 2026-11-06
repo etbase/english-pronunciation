@@ -37,7 +37,9 @@
 
   const tabPhonemes = document.getElementById('kkTabPhonemes');
   const tabExamples = document.getElementById('kkTabExamples');
+  const tabPairs = document.getElementById('kkTabPairs');
   const phonemePanel = document.getElementById('kkPhonemePanel');
+  const pairsPanel = document.getElementById('kkPairsPanel');
   const statsEl = document.getElementById('kkExStats');
   const phonemeFilter = document.getElementById('kkExPhonemeFilter');
   const statusEl = document.getElementById('kkExStatus');
@@ -658,13 +660,21 @@
 
   function showTab(name) {
     const examples = name === 'examples';
-    if (tabPhonemes) tabPhonemes.classList.toggle('active', !examples);
+    const pairs = name === 'pairs';
+    if (tabPhonemes) tabPhonemes.classList.toggle('active', !examples && !pairs);
     if (tabExamples) tabExamples.classList.toggle('active', examples);
-    if (phonemePanel) phonemePanel.hidden = examples;
+    if (tabPairs) tabPairs.classList.toggle('active', pairs);
+    if (phonemePanel) phonemePanel.hidden = examples || pairs;
     panel.hidden = !examples;
+    if (pairsPanel) pairsPanel.hidden = !pairs;
+    if (!examples) stopLocalAudio();
+    if (name !== 'phonemes' && typeof window.stopKkPhonemePlayback === 'function') window.stopKkPhonemePlayback();
+    if (!pairs && typeof window.stopKkPairPlayback === 'function') window.stopKkPairPlayback();
     if (examples) {
       if (location.hash !== '#examples') location.hash = '#examples';
-    } else if (location.hash === '#examples') {
+    } else if (pairs) {
+      if (location.hash !== '#pairs') location.hash = '#pairs';
+    } else if (location.hash === '#examples' || location.hash === '#pairs') {
       history.replaceState(null, '', location.pathname + location.search);
     }
   }
@@ -697,6 +707,9 @@
   if (tabExamples) tabExamples.addEventListener('click', function () {
     showTab('examples');
   });
+  if (tabPairs) tabPairs.addEventListener('click', function () {
+    showTab('pairs');
+  });
   if (phonemeFilter) phonemeFilter.addEventListener('change', renderList);
   const zipFemale = document.getElementById('kkExZipFemale');
   const zipMale = document.getElementById('kkExZipMale');
@@ -720,5 +733,7 @@
   renderPhonemeFilter();
   renderList();
   refreshStatuses();
-  if (location.hash === '#examples') showTab('examples');
+  window.stopKkExamplePlayback = stopLocalAudio;
+  if (location.hash === '#pairs') showTab('pairs');
+  else if (location.hash === '#examples') showTab('examples');
 })();

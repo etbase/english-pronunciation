@@ -57,6 +57,14 @@
   margin-bottom:14px;
 }
 
+.kk-mp-title .num{
+  width:auto;
+  min-width:36px;
+  padding:0 4px;
+  font-size:15px;
+  letter-spacing:.02em;
+}
+
 .kk-row.is-playing{
   background:#eef1f5;
 }
@@ -260,6 +268,14 @@
   background:#eef1f5;
   border-radius:14px;
   padding:2px 4px;
+}
+
+@media(max-width:720px){
+  #kkMpList .kk-ex-voices{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
 }
 
 @media(max-width:1100px){

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=20260924-avatar2">
-  <link rel="stylesheet" href="css/kk.css?v=20261021-ex3">
+  <link rel="stylesheet" href="css/kk.css?v=20261106-mp2">
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -45,6 +45,7 @@
   <div class="kk-tabs" role="tablist">
     <button type="button" class="kk-tab active" id="kkTabPhonemes" data-kk-tab="phonemes">KK 音標</button>
     <button type="button" class="kk-tab" id="kkTabExamples" data-kk-tab="examples">單字例句</button>
+    <button type="button" class="kk-tab" id="kkTabPairs" data-kk-tab="pairs">最小對立</button>
   </div>
 
   <div id="kkPhonemePanel">
@@ -84,6 +85,21 @@
     <div class="kk-ex-progress-bar" id="kkExProgressBar" hidden><div class="kk-ex-progress-fill" id="kkExProgressFill"></div></div>
     <div id="kkExList"></div>
   </div>
+
+  <div id="kkPairsPanel" hidden>
+    <div class="section-title"><span class="num"><img src="assets/icons/kk-phonetic.svg" alt=""></span>最小對立</div>
+    <p class="hint">美式英語女聲 Ava、男聲 Guy。檔名依對照表，後面加上 female 或 male。播放與 ZIP 使用已匯入的 MP3，不會自動呼叫 Azure。</p>
+    <p class="kk-ex-meta" id="kkMpStats"></p>
+    <div class="kk-ex-filters">
+      <select id="kkMpGroupFilter" aria-label="最小對立組別"></select>
+    </div>
+    <div class="kk-toolbar">
+      <button type="button" class="primary-btn btn-outline btn-compact" id="kkMpZipFemale">下載全部 ZIP（女聲）</button>
+      <button type="button" class="primary-btn btn-outline btn-compact" id="kkMpZipMale">下載全部 ZIP（男聲）</button>
+    </div>
+    <div class="notice kk-status" id="kkMpStatus" hidden></div>
+    <div id="kkMpList"></div>
+  </div>
 </section>
 <script src="js/config.js"></script>
 <script src="js/tts.js?v=20261020-ex1"></script>
@@ -91,7 +107,9 @@
 <script src="js/kk.js?v=20261020-ex1"></script>
 <script src="js/kk-examples-data.js?v=20261020-ex2"></script>
 <script src="js/kk-examples-audio.js?v=20261021-ex3"></script>
-<script src="js/kk-examples.js?v=20261021-ex3"></script>
+<script src="js/kk-examples.js?v=20261106-mp1"></script>
+<script src="js/kk-minimal-pairs-data.js?v=20261106-mp1"></script>
+<script src="js/kk-minimal-pairs.js?v=20261106-mp1"></script>
 </main>
 <nav class="bottom-nav">
   <a class="bottom-nav-account" href="login.html" id="bottomAccountLink">
